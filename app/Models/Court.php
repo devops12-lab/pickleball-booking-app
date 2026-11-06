@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Court extends Model
+{
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'facility_id',
+        'tenant_id',
+        'name',
+        'court_type',
+        'surface_type',
+        'hourly_rate',
+        'is_active',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'hourly_rate' => 'decimal:2',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    public function facility(): BelongsTo
+    {
+        return $this->belongsTo(Facility::class);
+    }
+
+    public function operatingHours(): HasMany
+    {
+        return $this->hasMany(CourtOperatingHour::class);
+    }
+
+    public function blockedSchedules(): HasMany
+    {
+        return $this->hasMany(CourtBlockedSchedule::class);
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function openPlaySessions(): HasMany
+    {
+        return $this->hasMany(OpenPlaySession::class);
+    }
+}

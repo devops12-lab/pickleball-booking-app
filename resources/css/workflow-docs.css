@@ -388,11 +388,64 @@
     text-transform: none;
 }
 
-.diagram-note {
-    padding: var(--space-2) var(--space-4) 0;
-    font-size: 12px;
-    line-height: 16px;
+/* Diagrams ------------------------------------------------------------ */
+
+.diagram-card {
+    background: var(--bg);
+}
+
+.diagram-canvas {
+    display: block;
+    padding: var(--space-4);
+    overflow: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+}
+
+/* Overrides the 20px icon sizing applied to every svg in api-docs.css. */
+.diagram-canvas svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    fill: initial;
+    stroke: initial;
+    stroke-width: initial;
+}
+
+/* "Actual size": draw at the diagram's natural width and scroll inside the card. */
+.diagram-canvas.is-actual-size {
+    max-height: 70vh;
+}
+
+.diagram-canvas.is-actual-size svg {
+    max-width: none;
+    margin: 0;
+}
+
+.diagram-status {
+    margin: 0;
     color: var(--ink-subtle);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.diagram-status.notice {
+    width: 100%;
+}
+
+.diagram-source {
+    border-top: 1px solid var(--border);
+}
+
+/* Keep labels readable on phones: large diagrams scroll sideways instead of shrinking. */
+@media (max-width: 639px) {
+    .diagram-canvas svg {
+        min-width: 560px;
+        max-width: none;
+        margin: 0;
+    }
 }
 
 /* Table of contents ----------------------------------------------------- */

@@ -121,30 +121,200 @@ function highlightCode(source, language) {
 
 /**
  * Wrap rendered <pre><code> blocks in the shared code-block card.
+ * Mermaid blocks become diagram cards that are drawn by renderDiagrams().
  */
 function enhanceCodeBlocks(container) {
     container.querySelectorAll('pre > code').forEach((code) => {
         const pre = code.parentElement;
         const language = ([...code.classList].find((name) => name.startsWith('language-')) ?? '').replace('language-', '').toLowerCase();
         const source = code.textContent.replace(/\n$/, '');
-        const isDiagram = language === 'mermaid';
-        const label = isDiagram ? 'Diagram source (Mermaid)' : (language || 'Code');
 
-        code.replaceChildren(isDiagram ? source : highlightCode(source, language));
+        if (language === 'mermaid') {
+            pre.replaceWith(diagramCard(source));
+
+            return;
+        }
+
+        code.replaceChildren(highlightCode(source, language));
 
         const figure = el('figure', { class: 'code-block' },
             el('figcaption', { class: 'code-block-head' },
-                el('span', { class: 'caption language', text: label }),
+                el('span', { class: 'caption language', text: language || 'Code' }),
                 el('span', { class: 'sample-actions' },
                     wrapToggle(),
-                    copyButton(isDiagram ? 'Copy diagram' : 'Copy', source, `${isDiagram ? 'Diagram' : 'Code'} copied`))),
-            isDiagram
-                ? el('p', { class: 'diagram-note' }, 'Shown as source because no Mermaid renderer is installed. Paste it into ', el('a', { href: 'https://mermaid.live', target: '_blank', rel: 'noopener noreferrer', text: 'mermaid.live' }), ' to view the diagram.')
-                : null);
+                    copyButton('Copy', source, 'Code copied'))));
 
         pre.replaceWith(figure);
         figure.append(pre);
     });
+}
+
+/* Diagrams (Mermaid) ------------------------------------------------------- */
+
+const diagramSources = new WeakMap();
+let diagramCounter = 0;
+let mermaidModule = null;
+
+/**
+ * A card that shows the rendered diagram, with its source one click away.
+ */
+function diagramCard(source) {
+    const canvas = el('div', { class: 'diagram-canvas', role: 'img', 'aria-label': 'Diagram', tabindex: '0' },
+        el('p', { class: 'diagram-status', text: 'Drawing diagram…' }));
+    const sourceBlock = el('pre', { class: 'diagram-source', hidden: true }, el('code', { text: source }));
+
+    const toggle = el('button', { type: 'button', class: 'copy-button', 'aria-pressed': 'false', text: 'View source', dataset: { sourceToggle: 'true' } });
+    toggle.addEventListener('click', () => {
+        const showing = sourceBlock.hidden;
+        sourceBlock.hidden = !showing;
+        toggle.setAttribute('aria-pressed', String(showing));
+        toggle.textContent = showing ? 'Hide source' : 'View source';
+    });
+
+    const sizeToggle = el('button', { type: 'button', class: 'copy-button', 'aria-pressed': 'false', text: 'Actual size', title: 'Show the diagram at full size and scroll inside the card' });
+    sizeToggle.addEventListener('click', () => {
+        const actual = !canvas.classList.contains('is-actual-size');
+        canvas.classList.toggle('is-actual-size', actual);
+        sizeToggle.setAttribute('aria-pressed', String(actual));
+        sizeToggle.textContent = actual ? 'Fit width' : 'Actual size';
+        applyDiagramSize(canvas);
+    });
+
+    const figure = el('figure', { class: 'code-block diagram-card' },
+        el('figcaption', { class: 'code-block-head' },
+            el('span', { class: 'caption language', text: 'Diagram' }),
+            el('span', { class: 'sample-actions' }, sizeToggle, toggle, copyButton('Copy source', source, 'Diagram source copied'))),
+        canvas,
+        sourceBlock);
+
+    diagramSources.set(figure, source);
+
+    return figure;
+}
+
+function cssVariable(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/**
+ * Configure Mermaid with the calm-ui tokens for the current theme.
+ */
+function configureMermaid(mermaid) {
+    const dark = document.documentElement.dataset.theme === 'dark';
+
+    mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: 'base',
+        darkMode: dark,
+        fontFamily: cssVariable('--font-sans'),
+        themeVariables: {
+            darkMode: dark,
+            fontFamily: cssVariable('--font-sans'),
+            fontSize: '14px',
+            background: cssVariable('--bg'),
+            mainBkg: cssVariable('--surface'),
+            primaryColor: cssVariable('--surface'),
+            primaryTextColor: cssVariable('--ink'),
+            primaryBorderColor: cssVariable('--border-strong'),
+            secondaryColor: cssVariable('--accent-soft'),
+            secondaryTextColor: cssVariable('--ink'),
+            secondaryBorderColor: cssVariable('--accent-ink'),
+            tertiaryColor: cssVariable('--surface-muted'),
+            tertiaryTextColor: cssVariable('--ink'),
+            tertiaryBorderColor: cssVariable('--border'),
+            lineColor: cssVariable('--ink-subtle'),
+            textColor: cssVariable('--ink'),
+            nodeTextColor: cssVariable('--ink'),
+            clusterBkg: cssVariable('--surface-muted'),
+            clusterBorder: cssVariable('--border'),
+            edgeLabelBackground: cssVariable('--bg'),
+            noteBkgColor: cssVariable('--surface-muted'),
+            noteTextColor: cssVariable('--ink'),
+            noteBorderColor: cssVariable('--border'),
+            actorBkg: cssVariable('--surface'),
+            actorBorder: cssVariable('--border-strong'),
+            actorTextColor: cssVariable('--ink'),
+            actorLineColor: cssVariable('--border-strong'),
+            signalColor: cssVariable('--ink-muted'),
+            signalTextColor: cssVariable('--ink'),
+            labelBoxBkgColor: cssVariable('--surface-muted'),
+            labelBoxBorderColor: cssVariable('--border'),
+            labelTextColor: cssVariable('--ink'),
+            loopTextColor: cssVariable('--ink'),
+            activationBkgColor: cssVariable('--accent-soft'),
+            activationBorderColor: cssVariable('--accent-ink'),
+            errorBkgColor: cssVariable('--danger-soft'),
+            errorTextColor: cssVariable('--danger'),
+        },
+    });
+}
+
+/**
+ * Draw every diagram card inside the container. Mermaid is loaded only
+ * when a document actually contains a diagram.
+ */
+async function renderDiagrams(container) {
+    const cards = [...container.querySelectorAll('.diagram-card')];
+
+    if (cards.length === 0) {
+        return;
+    }
+
+    try {
+        mermaidModule ??= (await import('mermaid')).default;
+    } catch {
+        cards.forEach((card) => showDiagramError(card, "The diagram renderer couldn't be loaded. The source is shown instead."));
+
+        return;
+    }
+
+    configureMermaid(mermaidModule);
+
+    for (const card of cards) {
+        const canvas = card.querySelector('.diagram-canvas');
+
+        try {
+            const { svg } = await mermaidModule.render(`diagram-${++diagramCounter}`, diagramSources.get(card));
+
+            // A newer render may have replaced this document while Mermaid was working.
+            if (!card.isConnected) {
+                return;
+            }
+
+            // Mermaid output in strict mode is sanitized with DOMPurify before it is returned.
+            canvas.innerHTML = svg;
+            canvas.querySelector('svg')?.setAttribute('aria-hidden', 'true');
+            applyDiagramSize(canvas);
+        } catch {
+            showDiagramError(card, "This diagram couldn't be drawn. Its source is shown instead.");
+        }
+    }
+}
+
+/**
+ * In "actual size" mode, draw the SVG at its natural width from the viewBox.
+ */
+function applyDiagramSize(canvas) {
+    const svg = canvas.querySelector('svg');
+
+    if (!svg) {
+        return;
+    }
+
+    const naturalWidth = Number((svg.getAttribute('viewBox') ?? '').split(/\s+/)[2]);
+
+    svg.style.width = canvas.classList.contains('is-actual-size') && naturalWidth > 0 ? `${Math.ceil(naturalWidth)}px` : '';
+}
+
+function showDiagramError(card, message) {
+    card.querySelector('.diagram-canvas').replaceChildren(el('p', { class: 'diagram-status notice notice-warning', text: message }));
+
+    const source = card.querySelector('.diagram-source');
+    const toggle = card.querySelector('[data-source-toggle]');
+    source.hidden = false;
+    toggle.setAttribute('aria-pressed', 'true');
+    toggle.textContent = 'Hide source';
 }
 
 /* Sidebar ---------------------------------------------------------------- */
@@ -317,6 +487,7 @@ function renderDocument(document) {
     blocks.push(prose, pager(document));
 
     article.replaceChildren(...blocks);
+    renderDiagrams(prose);
 
     tocAside.replaceChildren(...(document.headings.length > 0
         ? [el('p', { class: 'toc-title', text: 'On this page' }), tocList(document.headings, (id) => scrollToSection(id))]
@@ -730,6 +901,8 @@ function boot() {
         document.documentElement.dataset.theme = next;
         localStorage.setItem('api-docs-theme', next);
         updateThemeButton();
+        // Redraw diagrams so they pick up the new theme colours.
+        renderDiagrams(article);
     });
 
     updateThemeButton();

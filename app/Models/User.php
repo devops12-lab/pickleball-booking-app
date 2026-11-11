@@ -273,6 +273,15 @@ class User extends Authenticatable
             return true;
         }
 
+        // Staff position whitelist: when the active staff assignment carries a
+        // position, the position's configured permission set replaces the
+        // staff role baseline for this tenant.
+        $positionPermissions = $this->staffPositionPermissions($tenantId);
+
+        if ($positionPermissions !== null) {
+            return in_array($permissionName, $positionPermissions, true);
+        }
+
         // Check role permissions through tenant_users
         return $this->tenantUsers()
             ->where('status', 'active')
@@ -283,5 +292,32 @@ class User extends Authenticatable
                 $query->where('name', $permissionName);
             })
             ->exists();
+    }
+
+    /**
+     * The permission whitelist of the staff position held in the target
+     * tenant, or null when the user has no positioned staff assignment.
+     *
+     * @return list<string>|null
+     */
+    protected function staffPositionPermissions(?int $tenantId): ?array
+    {
+        $assignment = $this->tenantUsers()
+            ->with('role')
+            ->where('status', 'active')
+            ->whereNotNull('position')
+            ->when($tenantId !== null, function ($query) use ($tenantId): void {
+                $query->where('tenant_id', $tenantId);
+            })
+            ->whereHas('role', function ($query): void {
+                $query->where('name', 'staff');
+            })
+            ->first();
+
+        if ($assignment === null) {
+            return null;
+        }
+
+        return config("staff-positions.positions.{$assignment->position->value}.permissions");
     }
 }

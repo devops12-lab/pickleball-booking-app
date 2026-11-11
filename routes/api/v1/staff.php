@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->name('auth.')->group(function (): void {
     Route::post('/login', [StaffAuthController::class, 'login'])->middleware('throttle:login')->name('login');
     Route::post('/google', [StaffAuthController::class, 'google'])->middleware('throttle:login')->name('google');
-    Route::post('/accept-invitation', [StaffAuthController::class, 'acceptInvitation'])->name('accept_invitation');
     Route::post('/forgot-password', [StaffAuthController::class, 'forgotPassword'])->middleware('throttle:forgot-password')->name('password.forgot');
     Route::post('/reset-password', [StaffAuthController::class, 'resetPassword'])->middleware('throttle:password-reset')->name('password.reset');
 
@@ -35,12 +34,27 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
 Route::middleware(['auth:sanctum', 'account.active', 'tenant.context', 'tenant.access', 'role:staff', 'throttle:api'])->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
-    Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
-    Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('bookings.status');
+    Route::get('/bookings', [BookingController::class, 'index'])
+        ->middleware('permission:bookings.view')
+        ->name('bookings.index');
 
-    Route::get('/payments/pending', [PaymentController::class, 'pending'])->name('payments.pending');
-    Route::post('/payments/{payment}/verify', [PaymentController::class, 'verify'])->name('payments.verify');
+    Route::get('/bookings/{booking}', [BookingController::class, 'show'])
+        ->middleware('permission:bookings.view')
+        ->name('bookings.show');
 
-    Route::post('/bookings/{booking}/check-in', [CheckInController::class, 'checkIn'])->name('bookings.check_in');
+    Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])
+        ->middleware('permission:bookings.manage')
+        ->name('bookings.status');
+
+    Route::get('/payments/pending', [PaymentController::class, 'pending'])
+        ->middleware('permission:payments.view')
+        ->name('payments.pending');
+
+    Route::post('/payments/{payment}/verify', [PaymentController::class, 'verify'])
+        ->middleware('permission:payments.verify')
+        ->name('payments.verify');
+
+    Route::post('/bookings/{booking}/check-in', [CheckInController::class, 'checkIn'])
+        ->middleware('permission:bookings.check_in')
+        ->name('bookings.check_in');
 });

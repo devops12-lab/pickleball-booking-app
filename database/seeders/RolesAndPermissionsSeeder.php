@@ -36,6 +36,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'bookings.view', 'label' => 'View Bookings', 'group' => 'bookings'],
             ['name' => 'bookings.manage', 'label' => 'Manage All Facility Bookings', 'group' => 'bookings'],
             ['name' => 'bookings.cancel', 'label' => 'Cancel Bookings', 'group' => 'bookings'],
+            ['name' => 'bookings.check_in', 'label' => 'Check In Bookings', 'group' => 'bookings'],
 
             // Payments
             ['name' => 'payments.view', 'label' => 'View Payments', 'group' => 'payments'],
@@ -72,6 +73,17 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'database_backups.delete', 'label' => 'Delete Database Backups', 'group' => 'database_backups'],
             ['name' => 'database_backups.restore', 'label' => 'Restore Database Backups', 'group' => 'database_backups'],
             ['name' => 'database_backups.manage_schedule', 'label' => 'Manage Database Backup Schedules', 'group' => 'database_backups'],
+
+            // Announcements
+            ['name' => 'announcements.view', 'label' => 'View Announcements', 'group' => 'announcements'],
+            ['name' => 'announcements.create', 'label' => 'Create Announcements', 'group' => 'announcements'],
+            ['name' => 'announcements.update', 'label' => 'Update Announcements', 'group' => 'announcements'],
+            ['name' => 'announcements.delete', 'label' => 'Delete Announcements', 'group' => 'announcements'],
+            ['name' => 'announcements.publish', 'label' => 'Publish & Archive Announcements', 'group' => 'announcements'],
+
+            // Payment Methods & Court Front
+            ['name' => 'payment_methods.manage', 'label' => 'Manage Facility Payment Methods', 'group' => 'payment_methods'],
+            ['name' => 'court_front.manage', 'label' => 'Manage Court Front', 'group' => 'court_front'],
         ];
 
         $permissionModels = [];
@@ -103,6 +115,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'tournaments.create', 'tournaments.manage',
             'scores.submit', 'scores.verify',
             'audit_logs.view',
+            'announcements.view', 'announcements.create', 'announcements.update', 'announcements.delete', 'announcements.publish',
+            'payment_methods.manage', 'court_front.manage',
         ];
         $owner->permissions()->sync(
             collect($ownerPermissions)->map(fn ($slug) => $permissionModels[$slug]->id ?? null)->filter()
@@ -113,7 +127,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['label' => 'Facility Staff', 'scope' => 'tenant', 'description' => 'Operations staff managing bookings, check-ins, and court facilitation.']
         );
         $staffPermissions = [
-            'courts.view', 'bookings.view', 'bookings.manage',
+            'courts.view', 'bookings.view', 'bookings.manage', 'bookings.check_in',
             'payments.view', 'payments.verify',
             'open_play.manage', 'scores.submit', 'scores.verify',
         ];

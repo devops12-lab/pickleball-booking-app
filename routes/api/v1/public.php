@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Public\ClubController;
 use App\Http\Controllers\Api\V1\Public\CourtController;
+use App\Http\Controllers\Api\V1\Public\CourtFrontController;
 use App\Http\Controllers\Api\V1\Public\FacilityController;
 use App\Http\Controllers\Api\V1\Public\OpenPlayController;
 use App\Http\Controllers\Api\V1\Public\RankingController;
@@ -11,6 +12,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('throttle:public-api')->group(function (): void {
     Route::get('/facilities', [FacilityController::class, 'index'])->name('facilities.index');
     Route::get('/facilities/{facility}', [FacilityController::class, 'show'])->name('facilities.show');
+
+    Route::get('/tenants/{tenant}/court-front', [CourtFrontController::class, 'show'])
+        ->whereNumber('tenant')
+        ->name('court_fronts.show');
 
     Route::get('/courts', [CourtController::class, 'index'])->name('courts.index');
     Route::get('/courts/{court}', [CourtController::class, 'show'])->name('courts.show');

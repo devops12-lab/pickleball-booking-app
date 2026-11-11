@@ -44,6 +44,14 @@ class EnsureTenantAccess
         if (! $this->permissionService->hasTenantAccess($user, $tenant->id)) {
             return $this->errorResponse(
                 message: 'You do not have administrative or staff access to this facility tenant.',
+                errors: [
+                    'requested_tenant_id' => $tenant->id,
+                    'requested_tenant_name' => $tenant->name,
+                    // Helps callers spot a stale X-Tenant-ID header quickly.
+                    'member_tenant_ids' => $user->tenantUsers()
+                        ->where('status', 'active')
+                        ->pluck('tenant_id'),
+                ],
                 code: Response::HTTP_FORBIDDEN
             );
         }

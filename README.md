@@ -8,7 +8,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![API](https://img.shields.io/badge/API-v1-2563EB?style=flat-square)](docs/API_DOCUMENTATION.md)
 [![Auth](https://img.shields.io/badge/Auth-Laravel%20Sanctum-8A2BE2?style=flat-square)](https://laravel.com/docs/sanctum)
-[![Tests](https://img.shields.io/badge/tests-182%20passing-22C55E?style=flat-square)](#testing)
+[![Tests](https://img.shields.io/badge/tests-244%20passing-22C55E?style=flat-square)](#testing)
 
 </div>
 
@@ -26,10 +26,12 @@ Facility owners independently manage their venues, courts, bookings, staff, and 
 | :--- | :--- |
 | **Shared-Schema Multi-Tenancy** | Centralized database with strict tenant boundary isolation via `tenant_id` foreign keys, `TenantContextService`, and `BelongsToTenant` Eloquent scopes. |
 | **Unified Global Player Identity** | Players register once to discover venues, book courts, join open-play sessions, and enter tournaments across all facility tenants — no separate credentials. |
-| **Granular RBAC** | 5 primary roles (System Admin, Owner, Staff, Player, Club Manager) with fine-grained, permission-based capabilities. |
+| **Granular RBAC** | 5 primary roles plus staff positions (Manager, Front Desk, Court Attendant, Scorer) with fine-grained, permission-based capabilities. |
 | **Secure API Authentication** | Laravel Sanctum bearer tokens with profile management, password resets, and Google OAuth integration readiness. |
 | **Standardized API v1** | Uniform JSON response wrappers (`ApiResponse`), consistent HTTP status codes, and centralized exception rendering. |
 | **Database Backup & Restore** | Native MySQL / PostgreSQL / SQLite dumps with guarded restore, scheduled backups, retention policies, and full audit logging. |
+| **Announcements** | Platform-wide and tenant-scoped announcements with scheduled publishing, audience targeting, read tracking, and unread counts. |
+| **Facility Operations** | Owner-created staff accounts, court image galleries, configurable payment channels (GCash, Maya, QRPh, banks), and a public court front. |
 
 ## Role-Based API Architecture
 
@@ -67,6 +69,8 @@ Every user role has a distinct API route prefix, separate controllers, dedicated
 | [RBAC & Permissions Matrix](docs/RBAC_PERMISSION_MATRIX.md) | Role and permission assignments |
 | [Multi-Tenancy Guide](docs/MULTI_TENANCY.md) | Tenant isolation and context resolution |
 | [Database Backup & Restore](docs/DATABASE_BACKUP_RESTORE.md) | Backups, restore safety gates, scheduling, retention |
+| [Announcements](docs/ANNOUNCEMENTS.md) | Platform & tenant announcements, lifecycle, read tracking |
+| [Facility Management](docs/FACILITY_MANAGEMENT.md) | Staff credentials & positions, court images, payment methods, court front |
 | [Development Setup & Testing](docs/DEVELOPMENT_SETUP.md) | Local environment and test suite |
 | [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) | Feature delivery plan |
 | [System Architecture & Execution Plan](docs/PLAN.md) | End-to-end build plan |
@@ -107,7 +111,7 @@ php artisan serve
 php artisan test --compact
 ```
 
-The suite currently covers **182 tests / 860 assertions**, including feature tests for multi-tenancy isolation, RBAC authorization, booking availability, payment verification, and the database backup & restore subsystem.
+The suite currently covers **244 tests / 1187 assertions**, including feature tests for multi-tenancy isolation, RBAC authorization, staff management and positions, booking availability, payment verification, the database backup & restore subsystem, announcements, and facility management.
 
 ---
 

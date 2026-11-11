@@ -29,6 +29,7 @@ class CourtController extends Controller
         $courts = Court::when($facilityId, fn ($q) => $q->where('facility_id', $facilityId))
             ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
             ->where('is_active', true)
+            ->with('images')
             ->paginate($request->integer('per_page', 15));
 
         return $this->successResponse(
@@ -46,7 +47,7 @@ class CourtController extends Controller
     public function show(Court $court): JsonResponse
     {
         return $this->successResponse(
-            data: new CourtResource($court->load(['facility', 'operatingHours'])),
+            data: new CourtResource($court->load(['facility', 'operatingHours', 'images'])),
             message: 'Court details retrieved.'
         );
     }

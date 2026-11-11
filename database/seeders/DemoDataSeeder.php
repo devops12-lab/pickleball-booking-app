@@ -10,7 +10,6 @@ use App\Models\Facility;
 use App\Models\OpenPlaySession;
 use App\Models\PlayerStatistic;
 use App\Models\Role;
-use App\Models\StaffInvitation;
 use App\Models\Tenant;
 use App\Models\TenantUser;
 use App\Models\Tournament;
@@ -210,17 +209,20 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
-        // 10. Demo Staff Invitation Token (for testing staff invitation acceptance in Postman)
-        StaffInvitation::firstOrCreate(
-            ['token' => 'demo-staff-invitation-token-12345'],
+        // 10. Demo Staff Account (created directly by the owner, no invitation)
+        $demoStaff = User::firstOrCreate(
+            ['email' => 'newstaff.demo@courtflex.test'],
             [
-                'tenant_id' => $tenant->id,
-                'email' => 'newstaff.demo@courtflex.test',
-                'role_id' => $staffRole->id,
-                'invited_by' => $owner->id,
-                'status' => 'pending',
-                'expires_at' => now()->addDays(14),
+                'name' => 'Nina Newstaff',
+                'password' => Hash::make('Password123!'),
+                'account_status' => 'active',
+                'email_verified_at' => now(),
             ]
+        );
+
+        TenantUser::firstOrCreate(
+            ['tenant_id' => $tenant->id, 'user_id' => $demoStaff->id],
+            ['role_id' => $staffRole->id, 'position' => 'front_desk', 'status' => 'active']
         );
     }
 }

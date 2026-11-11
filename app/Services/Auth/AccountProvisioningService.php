@@ -6,7 +6,6 @@ use App\Models\ClubInvitation;
 use App\Models\ClubMember;
 use App\Models\PlayerStatistic;
 use App\Models\Role;
-use App\Models\StaffInvitation;
 use App\Models\Tenant;
 use App\Models\TenantUser;
 use App\Models\User;
@@ -120,80 +119,6 @@ class AccountProvisioningService
             }
 
             return $user;
-        });
-    }
-
-    /**
-     * Create an invitation for a Staff member.
-     */
-    public function createStaffInvitation(Tenant $tenant, string $email, User $inviter, ?string $roleName = 'staff'): StaffInvitation
-    {
-        $role = Role::where('name', $roleName ?? 'staff')->firstOrFail();
-
-        return StaffInvitation::create([
-            'tenant_id' => $tenant->id,
-            'email' => strtolower(trim($email)),
-            'role_id' => $role->id,
-            'invited_by' => $inviter->id,
-            'token' => Str::random(64),
-            'status' => 'pending',
-            'expires_at' => now()->addDays(7),
-        ]);
-    }
-
-    /**
-     * Accept a Staff invitation and provision/link the staff account.
-     *
-     * @return array{user: User, invitation: StaffInvitation}
-     */
-    public function acceptStaffInvitation(string $token, array $userData, ?array $googleDetails = null): array
-    {
-        return DB::transaction(function () use ($token, $userData, $googleDetails) {
-            $invitation = StaffInvitation::where('token', $token)
-                ->where('status', 'pending')
-                ->where('expires_at', '>', now())
-                ->first();
-
-            if (! $invitation) {
-                throw new InvalidArgumentException('Invalid or expired staff invitation token.');
-            }
-
-            $user = User::where('email', $invitation->email)->first();
-
-            if (! $user) {
-                $user = User::create([
-                    'name' => $userData['name'] ?? $invitation->email,
-                    'email' => $invitation->email,
-                    'password' => isset($userData['password']) ? Hash::make($userData['password']) : Hash::make(Str::random(32)),
-                    'account_status' => 'active',
-                    'email_verified_at' => now(),
-                ]);
-
-                PlayerStatistic::create([
-                    'user_id' => $user->id,
-                    'current_rating' => 1200.00,
-                ]);
-            }
-
-            if ($googleDetails) {
-                UserAuthProvider::firstOrCreate(
-                    ['provider' => 'google', 'provider_user_id' => $googleDetails['id']],
-                    [
-                        'user_id' => $user->id,
-                        'provider_email' => $googleDetails['email'],
-                        'avatar' => $googleDetails['avatar'] ?? null,
-                    ]
-                );
-            }
-
-            TenantUser::updateOrCreate(
-                ['tenant_id' => $invitation->tenant_id, 'user_id' => $user->id],
-                ['role_id' => $invitation->role_id, 'status' => 'active']
-            );
-
-            $invitation->update(['status' => 'accepted']);
-
-            return ['user' => $user, 'invitation' => $invitation];
         });
     }
 

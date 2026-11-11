@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api\V1\Players;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Uploads\UploadPaymentProofRequest;
 use App\Http\Resources\PaymentResource;
+use App\Http\Resources\TenantPaymentMethodResource;
 use App\Http\Traits\ApiResponse;
 use App\Models\Payment;
+use App\Models\Tenant;
+use App\Models\TenantPaymentMethod;
 use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -61,11 +64,35 @@ class PaymentController extends Controller
             $updates['transaction_reference'] = $request->validated('transaction_reference');
         }
 
+        // The chosen channel must be one the facility actually accepts; the
+        // FormRequest validated it against the tenant's active methods.
+        if ($request->filled('payment_method')) {
+            $updates['payment_method'] = $request->validated('payment_method');
+        }
+
         $payment->update($updates);
 
         return $this->successResponse(
             data: new PaymentResource($payment->fresh()),
             message: 'Payment proof uploaded successfully. Awaiting verification.'
+        );
+    }
+
+    /**
+     * List the active payment channels of a facility for reservation checkout.
+     */
+    public function tenantMethods(Request $request, Tenant $tenant): JsonResponse
+    {
+        $methods = TenantPaymentMethod::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return $this->successResponse(
+            data: TenantPaymentMethodResource::collection($methods),
+            message: 'Accepted payment methods retrieved.'
         );
     }
 }

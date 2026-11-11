@@ -27,3 +27,15 @@ Schedule::command('database:backup-cleanup')
     ->dailyAt('04:30')
     ->withoutOverlapping(30)
     ->onOneServer();
+
+/*
+|--------------------------------------------------------------------------
+| Announcements
+|--------------------------------------------------------------------------
+| Scheduled announcements flip to published once their publish time has
+| passed. The runner is minute based so owners can pick any future time.
+*/
+Schedule::command('announcements:publish-due')
+    ->everyMinute()
+    ->withoutOverlapping(30)
+    ->onOneServer();

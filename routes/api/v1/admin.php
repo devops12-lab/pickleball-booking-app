@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AnalyticsController;
+use App\Http\Controllers\Api\V1\Admin\AnnouncementController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController;
 use App\Http\Controllers\Api\V1\Admin\DatabaseBackupController;
 use App\Http\Controllers\Api\V1\Admin\DatabaseBackupLogController;
@@ -123,5 +124,45 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:system-admin', 'throt
             ->middleware(['permission:database_backups.create', 'throttle:resource-creation'])
             ->whereNumber('schedule')
             ->name('run');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Announcements (platform-wide)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('announcements')->name('announcements.')->group(function (): void {
+        Route::get('/', [AnnouncementController::class, 'index'])
+            ->middleware('permission:announcements.view')
+            ->name('index');
+
+        Route::post('/', [AnnouncementController::class, 'store'])
+            ->middleware(['permission:announcements.create', 'throttle:resource-creation'])
+            ->name('store');
+
+        Route::get('/{announcement}', [AnnouncementController::class, 'show'])
+            ->middleware('permission:announcements.view')
+            ->whereNumber('announcement')
+            ->name('show');
+
+        Route::patch('/{announcement}', [AnnouncementController::class, 'update'])
+            ->middleware('permission:announcements.update')
+            ->whereNumber('announcement')
+            ->name('update');
+
+        Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])
+            ->middleware('permission:announcements.delete')
+            ->whereNumber('announcement')
+            ->name('destroy');
+
+        Route::post('/{announcement}/publish', [AnnouncementController::class, 'publish'])
+            ->middleware('permission:announcements.publish')
+            ->whereNumber('announcement')
+            ->name('publish');
+
+        Route::post('/{announcement}/archive', [AnnouncementController::class, 'archive'])
+            ->middleware('permission:announcements.publish')
+            ->whereNumber('announcement')
+            ->name('archive');
     });
 });

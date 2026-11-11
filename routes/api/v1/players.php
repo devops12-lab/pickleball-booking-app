@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\PlayerAuthController;
+use App\Http\Controllers\Api\V1\Players\AnnouncementController;
 use App\Http\Controllers\Api\V1\Players\BookingController;
 use App\Http\Controllers\Api\V1\Players\ClubController;
 use App\Http\Controllers\Api\V1\Players\DashboardController;
@@ -62,4 +63,27 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:player', 'throttle:ap
     Route::get('/statistics', [RankingController::class, 'statistics'])->name('statistics');
     Route::get('/payment-history', [PaymentController::class, 'history'])->name('payments.history');
     Route::post('/payments/{payment}/proof', [PaymentController::class, 'uploadProof'])->name('payments.proof');
+
+    Route::get('/tenants/{tenant}/payment-methods', [PaymentController::class, 'tenantMethods'])
+        ->whereNumber('tenant')
+        ->name('payments.tenant_methods');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Announcements (/api/v1/players/announcements)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('announcements')->name('announcements.')->group(function (): void {
+        Route::get('/', [AnnouncementController::class, 'index'])->name('index');
+
+        Route::get('/unread-count', [AnnouncementController::class, 'unreadCount'])->name('unread_count');
+
+        Route::get('/{announcement}', [AnnouncementController::class, 'show'])
+            ->whereNumber('announcement')
+            ->name('show');
+
+        Route::post('/{announcement}/read', [AnnouncementController::class, 'markRead'])
+            ->whereNumber('announcement')
+            ->name('read');
+    });
 });

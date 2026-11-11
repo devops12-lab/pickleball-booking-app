@@ -3,7 +3,6 @@
 use App\Models\Club;
 use App\Models\ClubMember;
 use App\Models\Role;
-use App\Models\StaffInvitation;
 use App\Models\Tenant;
 use App\Models\TenantUser;
 use App\Models\User;
@@ -13,7 +12,6 @@ use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -231,47 +229,22 @@ describe('Facility Staff Authentication', function (): void {
         $response->assertStatus(403);
     });
 
-    test('staff can accept invitation token and authenticate', function (): void {
-        $owner = User::create([
-            'name' => 'Owner Otto',
-            'email' => 'otto@metro.test',
+    test('owner-created staff credentials allow staff login', function (): void {
+        $staffUser = User::create([
+            'name' => 'Clara Staff',
+            'email' => 'clara.staff@metro.test',
             'password' => Hash::make('Password123!'),
             'account_status' => 'active',
+            'email_verified_at' => now(),
         ]);
-
-        $invitation = StaffInvitation::create([
+        TenantUser::create([
             'tenant_id' => $this->tenant->id,
-            'email' => 'clara.staff@metro.test',
+            'user_id' => $staffUser->id,
             'role_id' => $this->staffRole->id,
-            'invited_by' => $owner->id,
-            'token' => Str::random(40),
-            'status' => 'pending',
-            'expires_at' => now()->addDays(7),
-        ]);
-
-        $response = $this->postJson('/api/v1/staff/auth/accept-invitation', [
-            'token' => $invitation->token,
-            'name' => 'Clara Staff',
-            'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
-        ]);
-
-        $response->assertCreated()
-            ->assertJsonPath('data.user.active_role', 'staff')
-            ->assertJsonPath('data.context.tenant_id', $this->tenant->id);
-
-        $this->assertDatabaseHas('users', ['email' => 'clara.staff@metro.test']);
-        $this->assertDatabaseHas('tenant_users', [
-            'tenant_id' => $this->tenant->id,
-            'role_id' => $this->staffRole->id,
+            'position' => 'front_desk',
             'status' => 'active',
         ]);
-        $this->assertDatabaseHas('staff_invitations', [
-            'token' => $invitation->token,
-            'status' => 'accepted',
-        ]);
 
-        // Staff can now login
         $loginResponse = $this->postJson('/api/v1/staff/auth/login', [
             'email' => 'clara.staff@metro.test',
             'password' => 'Password123!',

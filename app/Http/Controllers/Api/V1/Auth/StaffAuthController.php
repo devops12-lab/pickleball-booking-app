@@ -8,7 +8,6 @@ use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\GoogleAuthTokenRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
-use App\Http\Requests\Auth\StaffAcceptInvitationRequest;
 use App\Http\Traits\ApiResponse;
 use App\Services\Auth\AccountProvisioningService;
 use App\Services\Auth\AuthenticationService;
@@ -18,7 +17,6 @@ use App\Services\Auth\TokenManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Symfony\Component\HttpFoundation\Response;
 
 class StaffAuthController extends Controller
 {
@@ -82,41 +80,6 @@ class StaffAuthController extends Controller
         return $this->successResponse(
             data: $authResponse,
             message: 'Staff Google authentication successful.'
-        );
-    }
-
-    /**
-     * Accept a Staff invitation token to activate a staff account.
-     */
-    public function acceptInvitation(StaffAcceptInvitationRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-
-        $googleDetails = null;
-        if (! empty($validated['id_token'])) {
-            $googleDetails = $this->googleAuthService->verifyIdToken($validated['id_token']);
-        }
-
-        $result = $this->provisioningService->acceptStaffInvitation(
-            token: $validated['token'],
-            userData: [
-                'name' => $validated['name'] ?? null,
-                'password' => $validated['password'] ?? null,
-            ],
-            googleDetails: $googleDetails
-        );
-
-        $authResponse = $this->authService->buildAuthResponse(
-            user: $result['user'],
-            activeRole: 'staff',
-            tenantId: $result['invitation']->tenant_id,
-            message: 'Staff invitation accepted successfully. Welcome to the facility team!'
-        );
-
-        return $this->successResponse(
-            data: $authResponse,
-            message: 'Staff invitation accepted successfully.',
-            code: Response::HTTP_CREATED
         );
     }
 

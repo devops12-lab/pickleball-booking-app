@@ -65,6 +65,13 @@ class RolesAndPermissionsSeeder extends Seeder
             // Administration & Audit
             ['name' => 'audit_logs.view', 'label' => 'View Audit Logs', 'group' => 'admin'],
             ['name' => 'settings.manage', 'label' => 'Manage Platform Settings', 'group' => 'admin'],
+
+            // Database Backups
+            ['name' => 'database_backups.view', 'label' => 'View Database Backups', 'group' => 'database_backups'],
+            ['name' => 'database_backups.create', 'label' => 'Create Database Backups', 'group' => 'database_backups'],
+            ['name' => 'database_backups.delete', 'label' => 'Delete Database Backups', 'group' => 'database_backups'],
+            ['name' => 'database_backups.restore', 'label' => 'Restore Database Backups', 'group' => 'database_backups'],
+            ['name' => 'database_backups.manage_schedule', 'label' => 'Manage Database Backup Schedules', 'group' => 'database_backups'],
         ];
 
         $permissionModels = [];

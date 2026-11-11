@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Api\V1\Admin\AnalyticsController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController;
+use App\Http\Controllers\Api\V1\Admin\DatabaseBackupController;
+use App\Http\Controllers\Api\V1\Admin\DatabaseBackupLogController;
+use App\Http\Controllers\Api\V1\Admin\DatabaseBackupScheduleController;
 use App\Http\Controllers\Api\V1\Admin\SubscriptionController;
 use App\Http\Controllers\Api\V1\Admin\TenantController;
 use App\Http\Controllers\Api\V1\Auth\AdminAuthController;
@@ -45,4 +48,80 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:system-admin', 'throt
     Route::get('/analytics', [AnalyticsController::class, 'analytics'])->name('analytics');
     Route::get('/audit-logs', [AnalyticsController::class, 'auditLogs'])->name('audit_logs');
     Route::get('/settings', [AnalyticsController::class, 'settings'])->name('settings');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Backup & Restore
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('database-backups')->name('database_backups.')->group(function (): void {
+        Route::get('/', [DatabaseBackupController::class, 'index'])
+            ->middleware('permission:database_backups.view')
+            ->name('index');
+
+        Route::post('/', [DatabaseBackupController::class, 'store'])
+            ->middleware(['permission:database_backups.create', 'throttle:resource-creation'])
+            ->name('store');
+
+        Route::post('/upload', [DatabaseBackupController::class, 'upload'])
+            ->middleware(['permission:database_backups.create', 'throttle:resource-creation'])
+            ->name('upload');
+
+        Route::post('/restore-upload', [DatabaseBackupController::class, 'restoreUploaded'])
+            ->middleware(['permission:database_backups.create', 'permission:database_backups.restore', 'throttle:sensitive'])
+            ->name('restore_upload');
+
+        Route::get('/monitoring', [DatabaseBackupController::class, 'monitoring'])
+            ->middleware('permission:database_backups.view')
+            ->name('monitoring');
+
+        Route::get('/operations', [DatabaseBackupLogController::class, 'restores'])
+            ->middleware('permission:database_backups.view')
+            ->name('operations.index');
+
+        Route::get('/operations/{restoreLog}', [DatabaseBackupLogController::class, 'showRestore'])
+            ->middleware('permission:database_backups.view')
+            ->whereNumber('restoreLog')
+            ->name('operations.show');
+
+        Route::get('/audit-logs', [DatabaseBackupLogController::class, 'auditLogs'])
+            ->middleware('permission:database_backups.view')
+            ->name('audit_logs');
+
+        Route::get('/{backup}', [DatabaseBackupController::class, 'show'])
+            ->middleware('permission:database_backups.view')
+            ->whereNumber('backup')
+            ->name('show');
+
+        Route::get('/{backup}/download', [DatabaseBackupController::class, 'download'])
+            ->middleware(['permission:database_backups.view', 'throttle:sensitive'])
+            ->whereNumber('backup')
+            ->name('download');
+
+        Route::post('/{backup}/restore', [DatabaseBackupController::class, 'restore'])
+            ->middleware(['permission:database_backups.restore', 'throttle:sensitive'])
+            ->whereNumber('backup')
+            ->name('restore');
+
+        Route::delete('/{backup}', [DatabaseBackupController::class, 'destroy'])
+            ->middleware('permission:database_backups.delete')
+            ->whereNumber('backup')
+            ->name('destroy');
+    });
+
+    Route::prefix('backup-schedules')->name('database_backups.schedules.')->group(function (): void {
+        Route::get('/', [DatabaseBackupScheduleController::class, 'index'])
+            ->middleware('permission:database_backups.manage_schedule')
+            ->name('index');
+
+        Route::patch('/{schedule}', [DatabaseBackupScheduleController::class, 'update'])
+            ->middleware('permission:database_backups.manage_schedule')
+            ->whereNumber('schedule')
+            ->name('update');
+
+        Route::post('/{schedule}/run', [DatabaseBackupScheduleController::class, 'run'])
+            ->middleware(['permission:database_backups.create', 'throttle:resource-creation'])
+            ->whereNumber('schedule')
+            ->name('run');
+    });
 });

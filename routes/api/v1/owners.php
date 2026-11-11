@@ -3,9 +3,11 @@
 use App\Http\Controllers\Api\V1\Auth\OwnerAuthController;
 use App\Http\Controllers\Api\V1\Owners\BookingController;
 use App\Http\Controllers\Api\V1\Owners\CourtController;
+use App\Http\Controllers\Api\V1\Owners\CourtFrontController;
 use App\Http\Controllers\Api\V1\Owners\DashboardController;
 use App\Http\Controllers\Api\V1\Owners\FacilityController;
 use App\Http\Controllers\Api\V1\Owners\PaymentController;
+use App\Http\Controllers\Api\V1\Owners\PaymentMethodController;
 use App\Http\Controllers\Api\V1\Owners\ReportController;
 use App\Http\Controllers\Api\V1\Owners\StaffController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +53,11 @@ Route::middleware(['auth:sanctum', 'account.active', 'tenant.context', 'tenant.a
     Route::patch('/courts/{court}', [CourtController::class, 'update'])->name('courts.update');
     Route::delete('/courts/{court}', [CourtController::class, 'destroy'])->name('courts.destroy');
 
+    // Court gallery images (1 to 5 per court).
+    Route::post('/courts/{court}/images', [CourtController::class, 'addImages'])->middleware('throttle:resource-creation')->name('courts.images.add');
+    Route::post('/courts/{court}/images/reorder', [CourtController::class, 'reorderImages'])->name('courts.images.reorder');
+    Route::delete('/courts/{court}/images/{image}', [CourtController::class, 'deleteImage'])->name('courts.images.delete');
+
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
     Route::delete('/staff/{user}', [StaffController::class, 'destroy'])->name('staff.destroy');
@@ -62,4 +69,29 @@ Route::middleware(['auth:sanctum', 'account.active', 'tenant.context', 'tenant.a
     Route::post('/payments/{payment}/verify', [PaymentController::class, 'verify'])->name('payments.verify');
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Facility Payment Methods (/api/v1/owners/payment-methods)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('payment-methods')->name('payment_methods.')->group(function (): void {
+        Route::get('/', [PaymentMethodController::class, 'index'])->middleware('permission:payment_methods.manage')->name('index');
+        Route::post('/', [PaymentMethodController::class, 'store'])->middleware(['permission:payment_methods.manage', 'throttle:resource-creation'])->name('store');
+        Route::get('/{paymentMethod}', [PaymentMethodController::class, 'show'])->middleware('permission:payment_methods.manage')->whereNumber('paymentMethod')->name('show');
+        Route::patch('/{paymentMethod}', [PaymentMethodController::class, 'update'])->middleware('permission:payment_methods.manage')->whereNumber('paymentMethod')->name('update');
+        Route::delete('/{paymentMethod}', [PaymentMethodController::class, 'destroy'])->middleware('permission:payment_methods.manage')->whereNumber('paymentMethod')->name('destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Court Front / Store Front (/api/v1/owners/court-front)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('court-front')->name('court_front.')->group(function (): void {
+        Route::get('/', [CourtFrontController::class, 'show'])->middleware('permission:court_front.manage')->name('show');
+        Route::patch('/', [CourtFrontController::class, 'update'])->middleware('permission:court_front.manage')->name('update');
+        Route::post('/logo', [CourtFrontController::class, 'uploadLogo'])->middleware(['permission:court_front.manage', 'throttle:resource-creation'])->name('logo');
+        Route::post('/cover', [CourtFrontController::class, 'uploadCover'])->middleware(['permission:court_front.manage', 'throttle:resource-creation'])->name('cover');
+    });
 });

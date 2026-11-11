@@ -80,7 +80,9 @@ function createCourt($testCase, int $imageCount = 2): Court
     return Court::query()->latest('id')->firstOrFail();
 }
 
-test('court creation requires at least one image', function (): void {
+// Images are optional on create here: the owner portal already creates courts
+// without photos, so the gallery is filled in afterwards instead.
+test('a court can be created without images and get them later', function (): void {
     $this->actingAs($this->owner)
         ->withHeader('X-Tenant-ID', (string) $this->tenant->id)
         ->postJson('/api/v1/owners/courts', [
@@ -88,10 +90,18 @@ test('court creation requires at least one image', function (): void {
             'name' => 'No Photo Court',
             'hourly_rate' => 350,
         ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('images');
+        ->assertCreated();
 
-    $this->assertDatabaseCount('courts', 0);
+    $court = Court::query()->latest('id')->firstOrFail();
+
+    $this->actingAs($this->owner)
+        ->withHeader('X-Tenant-ID', (string) $this->tenant->id)
+        ->post("/api/v1/owners/courts/{$court->id}/images", [
+            'images' => [UploadedFile::fake()->image('first.jpg', 640, 480)],
+        ], ['Accept' => 'application/json'])
+        ->assertCreated();
+
+    expect($court->images()->count())->toBe(1);
 });
 
 test('a court is created with its gallery images', function (): void {

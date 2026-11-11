@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,6 +20,11 @@ class CourtResource extends JsonResource
             // Money is a decimal string in the SPA contract ("300.00"), never a float.
             'hourly_rate' => number_format((float) $this->hourly_rate, 2, '.', ''),
             'is_active' => $this->is_active,
+            'images' => $this->whenLoaded('images', fn () => $this->images->map(fn ($image): array => [
+                'id' => $image->id,
+                'url' => app(FileUploadService::class)->url($image->image_path),
+                'sort_order' => $image->sort_order,
+            ])->values()),
         ];
     }
 }

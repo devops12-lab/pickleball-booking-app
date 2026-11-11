@@ -57,6 +57,14 @@ class Court extends Model
         return $this->hasMany(Booking::class);
     }
 
+    /**
+     * Gallery photos of the court (1 to 5, ordered).
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(CourtImage::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function openPlaySessions(): HasMany
     {
         return $this->hasMany(OpenPlaySession::class);

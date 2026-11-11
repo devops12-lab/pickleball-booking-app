@@ -63,4 +63,9 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:player', 'throttle:ap
     Route::get('/statistics', [RankingController::class, 'statistics'])->name('statistics');
     Route::get('/payment-history', [PaymentController::class, 'history'])->name('payments.history');
     Route::post('/payments/{payment}/proof', [PaymentController::class, 'uploadProof'])->name('payments.proof');
+
+    // Payment channels a facility accepts, for the checkout sheet.
+    Route::get('/tenants/{tenant}/payment-methods', [PaymentController::class, 'tenantMethods'])
+        ->whereNumber('tenant')
+        ->name('payments.tenant_methods');
 });

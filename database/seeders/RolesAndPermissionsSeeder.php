@@ -65,6 +65,17 @@ class RolesAndPermissionsSeeder extends Seeder
             // Administration & Audit
             ['name' => 'audit_logs.view', 'label' => 'View Audit Logs', 'group' => 'admin'],
             ['name' => 'settings.manage', 'label' => 'Manage Platform Settings', 'group' => 'admin'],
+
+            // Database Backups
+            ['name' => 'database_backups.view', 'label' => 'View Database Backups', 'group' => 'database_backups'],
+            ['name' => 'database_backups.create', 'label' => 'Create Database Backups', 'group' => 'database_backups'],
+            ['name' => 'database_backups.delete', 'label' => 'Delete Database Backups', 'group' => 'database_backups'],
+            ['name' => 'database_backups.restore', 'label' => 'Restore Database Backups', 'group' => 'database_backups'],
+            ['name' => 'database_backups.manage_schedule', 'label' => 'Manage Database Backup Schedules', 'group' => 'database_backups'],
+
+            // Facility payment methods & court front
+            ['name' => 'payment_methods.manage', 'label' => 'Manage Facility Payment Methods', 'group' => 'payment_methods'],
+            ['name' => 'court_front.manage', 'label' => 'Manage Court Front', 'group' => 'court_front'],
         ];
 
         $permissionModels = [];
@@ -96,6 +107,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'tournaments.create', 'tournaments.manage',
             'scores.submit', 'scores.verify',
             'audit_logs.view',
+            'payment_methods.manage', 'court_front.manage',
         ];
         $owner->permissions()->sync(
             collect($ownerPermissions)->map(fn ($slug) => $permissionModels[$slug]->id ?? null)->filter()

@@ -1,0 +1,79 @@
+# CourtFlex — Multi-Tenant Pickleball SaaS Platform
+
+CourtFlex is a centralized, multi-tenant SaaS pickleball court booking, tournament, and sports club management platform built on Laravel 13 and PHP 8.5.
+
+Facility owners independently manage their venues, courts, bookings, staff, and tournaments while players maintain a single global account across all facilities in the CourtFlex network.
+
+---
+
+## Role-Based API Architecture
+
+Every user role has a distinct API route prefix, separate controllers, dedicated authentication endpoints, and server-side middleware under `/api/v1/`:
+
+| Role / Scope | Route Prefix | Auth Endpoints | Primary Middleware | Google OAuth | Purpose |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **System Admin** | `/api/v1/admin/*` | `/api/v1/admin/auth/*` | `role:system-admin` | ❌ **Prohibited** | Platform KPIs, tenant onboarding/status, SaaS billing |
+| **Facility Owner** | `/api/v1/owners/*` | `/api/v1/owners/auth/*` | `tenant.context`, `role:owner` | ✅ Allowed | Manage venue facilities, courts, staff, revenue |
+| **Facility Staff** | `/api/v1/staff/*` | `/api/v1/staff/auth/*` | `tenant.context`, `role:staff` | ✅ Invited only | Daily shift reservations, check-ins, payment verifications |
+| **Player** | `/api/v1/players/*` | `/api/v1/players/auth/*` | `role:player` | ✅ Allowed | Personal profile, book courts, join clubs, open-play |
+| **Club Manager** | `/api/v1/organizers/*` | `/api/v1/organizers/auth/*` | `role:club_manager` | ✅ Assigned only | Manage club rosters, tournaments, submit match scores |
+| **Public Discovery** | `/api/v1/public/*` | N/A | None (Public) | N/A | Browse facilities, courts, clubs, open-play, rankings |
+
+---
+
+## Key Highlights
+
+- **Shared-Schema Multi-Tenancy**: Centralized database with strict tenant boundary isolation via `tenant_id` foreign keys, `TenantContextService`, and `BelongsToTenant` Eloquent scopes.
+- **Unified Global Player Identity**: Players register once to discover venues, book courts, join open play sessions, and enter tournaments across all facility tenants without separate credentials.
+- **Granular RBAC**: 5 primary roles (`System Admin`, `Owner`, `Staff`, `Player`, `Club Manager`) with fine-grained capabilities.
+- **Laravel Sanctum API Authentication**: Secure bearer tokens with profile management, password resets, and Google OAuth integration readiness.
+- **Standardized API v1**: Uniform JSON response wrappers (`ApiResponse`), consistent HTTP status codes, and exception rendering.
+- **Reusable Core Services**:
+  - `TenantContextService`: Request-lifecycle tenant resolution and thread safety.
+  - `PermissionService`: Contextual capability evaluation.
+  - `BookingAvailabilityService`: Conflict detection, operating hours, and blocked schedule enforcement.
+  - `PaymentVerificationService`: Payment approval/rejection state machine with audit trails.
+  - `AuditLogService`: Structured logging of security and administrative actions.
+  - `FileUploadService`: File storage with MIME verification.
+
+---
+
+## Documentation Index
+
+- [Architecture Overview](docs/ARCHITECTURE.md)
+- [API Documentation (v1)](docs/API_DOCUMENTATION.md)
+- [Postman API Testing Guide & Collection](docs/POSTMAN_TESTING_GUIDE.md)
+- [React Frontend & CORS Integration Guide](docs/REACT_API_INTEGRATION.md)
+- [Database Schema & Migrations](docs/DATABASE_SCHEMA.md)
+- [RBAC & Permissions Matrix](docs/RBAC_PERMISSION_MATRIX.md)
+- [Multi-Tenancy Guide](docs/MULTI_TENANCY.md)
+- [Development Setup & Testing](docs/DEVELOPMENT_SETUP.md)
+- [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
+- [System Architecture & Execution Plan](docs/PLAN.md)
+
+---
+
+## Quick Start
+
+```bash
+# Clone and install dependencies
+composer install
+npm install
+
+# Setup environment & application key
+cp .env.example .env
+php artisan key:generate
+
+# Run database migrations and seeders (including demo accounts & courts)
+php artisan migrate:fresh --seed
+
+# Run automated tests (60 tests, 100% pass)
+php artisan test --compact
+
+# Start development server
+php artisan serve
+```
+
+Default System Admin:
+- Email: `admin@courtflex.test`
+- Password: `Password123!`

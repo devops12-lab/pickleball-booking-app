@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Claude_Docs__guide",
+      "Bash(php:*)",
+      "Bash(node -e \"const fs=require\\('fs'\\); fs.writeFileSync\\('C:/Users/ec.40021031/.claude/plans/floating-mapping-mitten-agent-ae81284b839be86db.md', fs.readFileSync\\(0,'utf8'\\)\\);\")",
+      "Bash(node:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
+}

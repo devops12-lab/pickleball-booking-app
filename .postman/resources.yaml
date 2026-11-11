@@ -1,0 +1,13 @@
+# Use this workspace to collaborate
+workspace:
+  id: da746182-f7c0-4ba6-8324-8562637d4cd6
+
+cloudResources:
+  collections:
+    ../postman/collections/CourtFlex SaaS — API v1 Collection: 819cd0b2-57aa-4eb1-ae3c-aea8dc9de698
+
+# All resources in the `postman/` folder are automatically registered in Local View.
+# Point to additional files outside the `postman/` folder to register them individually. Example:
+#localResources:
+#  collections:
+#    - ../tests/E2E Test Collection/

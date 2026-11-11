@@ -84,6 +84,14 @@ class Tenant extends Model
         return $this->hasMany(OpenPlaySession::class);
     }
 
+    /**
+     * Payment channels this facility accepts at checkout.
+     */
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(TenantPaymentMethod::class);
+    }
+
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class);

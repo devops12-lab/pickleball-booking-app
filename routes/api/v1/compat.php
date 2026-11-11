@@ -4,9 +4,9 @@ use App\Http\Controllers\Api\V1\Compat\AuthController;
 use App\Http\Controllers\Api\V1\Compat\BookingController;
 use App\Http\Controllers\Api\V1\Compat\CalendarController;
 use App\Http\Controllers\Api\V1\Compat\ClubController;
+use App\Http\Controllers\Api\V1\Compat\CommunityController;
 use App\Http\Controllers\Api\V1\Compat\CourtController;
 use App\Http\Controllers\Api\V1\Compat\CourtExceptionController;
-use App\Http\Controllers\Api\V1\Compat\CommunityController;
 use App\Http\Controllers\Api\V1\Compat\DiscoveryController;
 use App\Http\Controllers\Api\V1\Compat\GeoController;
 use App\Http\Controllers\Api\V1\Compat\GuestBookingController;
@@ -17,14 +17,15 @@ use App\Http\Controllers\Api\V1\Compat\OpenPlayController;
 use App\Http\Controllers\Api\V1\Compat\OpenPlayQueueController;
 use App\Http\Controllers\Api\V1\Compat\OrganizerMoneyController;
 use App\Http\Controllers\Api\V1\Compat\OwnerSignupController;
+use App\Http\Controllers\Api\V1\Compat\PaymentMethodController;
+use App\Http\Controllers\Api\V1\Compat\PlatformController;
 use App\Http\Controllers\Api\V1\Compat\PlayerAuthController;
 use App\Http\Controllers\Api\V1\Compat\PlayerBookingController;
+use App\Http\Controllers\Api\V1\Compat\PlayerClubController;
 use App\Http\Controllers\Api\V1\Compat\PlayerDirectoryController;
 use App\Http\Controllers\Api\V1\Compat\PlayerHomeController;
 use App\Http\Controllers\Api\V1\Compat\PlayerProfileController;
-use App\Http\Controllers\Api\V1\Compat\PlayerClubController;
 use App\Http\Controllers\Api\V1\Compat\PlayerSearchController;
-use App\Http\Controllers\Api\V1\Compat\PlatformController;
 use App\Http\Controllers\Api\V1\Compat\RankingController;
 use App\Http\Controllers\Api\V1\Compat\ReportController;
 use App\Http\Controllers\Api\V1\Compat\StaffController;
@@ -172,6 +173,17 @@ Route::middleware(['auth:sanctum', 'compat.active'])->group(function (): void {
         Route::put('/courts/{court}/hours', [CourtController::class, 'updateHours'])->name('compat.courts.hours');
         Route::put('/courts/{court}/price-rules', [CourtController::class, 'updatePriceRules'])->name('compat.courts.price_rules');
         Route::get('/courts/{court}/availability', [CourtController::class, 'availability'])->name('compat.courts.availability');
+
+        // Court gallery photos (1 to 5 per court).
+        Route::post('/courts/{court}/images', [CourtController::class, 'addImages'])->name('compat.courts.images.add');
+        Route::post('/courts/{court}/images/reorder', [CourtController::class, 'reorderImages'])->name('compat.courts.images.reorder');
+        Route::delete('/courts/{court}/images/{image}', [CourtController::class, 'deleteImage'])->name('compat.courts.images.delete');
+
+        // Payment channels accepted at checkout.
+        Route::get('/payment-methods', [PaymentMethodController::class, 'index'])->name('compat.payment_methods.index');
+        Route::post('/payment-methods', [PaymentMethodController::class, 'store'])->name('compat.payment_methods.store');
+        Route::patch('/payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update'])->name('compat.payment_methods.update');
+        Route::delete('/payment-methods/{paymentMethod}', [PaymentMethodController::class, 'destroy'])->name('compat.payment_methods.destroy');
 
         Route::get('/court-exceptions', [CourtExceptionController::class, 'index'])->name('compat.court_exceptions.index');
         Route::post('/court-exceptions', [CourtExceptionController::class, 'store'])->name('compat.court_exceptions.store');

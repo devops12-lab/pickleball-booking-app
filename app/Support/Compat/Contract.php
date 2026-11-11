@@ -4,18 +4,21 @@ namespace App\Support\Compat;
 
 use App\Models\Booking;
 use App\Models\BookingReceipt;
+use App\Models\Club;
 use App\Models\Court;
+use App\Models\GeoLocation;
+use App\Models\OpenPlaySession;
 use App\Models\Payment;
 use App\Models\Refund;
 use App\Models\Tenant;
+use App\Models\TenantPaymentMethod;
 use App\Models\TenantSubscription;
 use App\Models\User;
 use App\Models\VenueProfile;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
+use App\Services\FileUploadService;
 use Carbon\CarbonImmutable;
-use App\Models\Club;
-use App\Models\OpenPlaySession;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * One place that turns backend rows into the exact shapes the SPA validates
@@ -230,6 +233,34 @@ class Contract
             'status' => in_array($court->status, ['active', 'inactive', 'maintenance'], true)
                 ? $court->status
                 : ($court->is_active ? 'active' : 'inactive'),
+            'images' => $court->relationLoaded('images')
+                ? $court->images->map(fn ($image): array => [
+                    'id' => (string) $image->id,
+                    'url' => app(FileUploadService::class)->url($image->image_path),
+                    'sort_order' => (int) $image->sort_order,
+                ])->values()->all()
+                : [],
+        ];
+    }
+
+    /**
+     * A facility payment channel as the owner portal reads it.
+     */
+    public static function tenantPaymentMethod(TenantPaymentMethod $method): array
+    {
+        return [
+            'id' => (string) $method->id,
+            'name' => (string) $method->name,
+            'type' => $method->type->value,
+            'type_label' => $method->type->label(),
+            'account_name' => $method->account_name,
+            'account_number' => $method->account_number,
+            'instructions' => $method->instructions,
+            'qr_image_url' => $method->qr_image !== null
+                ? app(FileUploadService::class)->url($method->qr_image)
+                : null,
+            'is_active' => (bool) $method->is_active,
+            'sort_order' => (int) $method->sort_order,
         ];
     }
 

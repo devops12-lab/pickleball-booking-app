@@ -6,9 +6,11 @@ use App\Http\Controllers\Api\V1\Compat\Concerns\AuthorizesClub;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponse;
 use App\Models\Court;
+use App\Models\CourtImage;
 use App\Models\CourtOperatingHour;
 use App\Models\Tenant;
 use App\Services\BookingAvailabilityService;
+use App\Services\FileUploadService;
 use App\Support\Compat\Contract;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -32,7 +34,7 @@ class CourtController extends Controller
             return $denied;
         }
 
-        $courts = $club->courts()->orderBy('id')->get();
+        $courts = $club->courts()->with('images')->orderBy('id')->get();
 
         return $this->successResponse(data: $courts->map(fn (Court $court) => Contract::court($court))->all());
     }
@@ -74,9 +76,115 @@ class CourtController extends Controller
         ]);
 
         return $this->successResponse(
-            data: Contract::courtDetail($court->load(['operatingHours', 'priceRules'])),
+            data: Contract::courtDetail($court->load(['operatingHours', 'priceRules', 'images'])),
             message: 'Court created.',
             code: Response::HTTP_CREATED
+        );
+    }
+
+    /**
+     * Upload 1 to 5 gallery photos for a court.
+     */
+    public function addImages(Request $request, Tenant $club, Court $court): JsonResponse
+    {
+        if ($denied = $this->denyUnlessMember($club)) {
+            return $denied;
+        }
+
+        if (! $this->belongsToClub($club, $court->tenant_id)) {
+            return $this->errorResponse('Court not found in this club.', code: Response::HTTP_NOT_FOUND);
+        }
+
+        $request->validate([
+            'images' => ['required', 'array', 'min:1', 'max:'.CourtImage::MAX_PER_COURT],
+            'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ]);
+
+        $existing = $court->images()->count();
+        $incoming = count((array) $request->file('images'));
+
+        if ($existing + $incoming > CourtImage::MAX_PER_COURT) {
+            return $this->errorResponse(
+                'A court can hold at most '.CourtImage::MAX_PER_COURT.' photos; this court already has '.$existing.'.',
+                code: Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $upload = app(FileUploadService::class);
+        $nextOrder = (int) $court->images()->max('sort_order');
+
+        foreach ((array) $request->file('images') as $file) {
+            $nextOrder++;
+
+            $court->images()->create([
+                'image_path' => $upload->upload($file, 'courts'),
+                'sort_order' => $nextOrder,
+            ]);
+        }
+
+        return $this->successResponse(
+            data: Contract::court($court->load('images')),
+            message: 'Photos added.'
+        );
+    }
+
+    /**
+     * Remove one photo, keeping at least one on the court.
+     */
+    public function deleteImage(Tenant $club, Court $court, CourtImage $image): JsonResponse
+    {
+        if ($denied = $this->denyUnlessMember($club)) {
+            return $denied;
+        }
+
+        if (! $this->belongsToClub($club, $court->tenant_id) || $image->court_id !== $court->id) {
+            return $this->errorResponse('Photo not found on this court.', code: Response::HTTP_NOT_FOUND);
+        }
+
+        if ($court->images()->count() <= 1) {
+            return $this->errorResponse(
+                'A court needs at least one photo. Add another before removing this one.',
+                code: Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        app(FileUploadService::class)->delete($image->image_path);
+        $image->delete();
+
+        return $this->successResponse(
+            data: Contract::court($court->load('images')),
+            message: 'Photo removed.'
+        );
+    }
+
+    /**
+     * Reorder the gallery: the ids arrive in the order they should be shown.
+     */
+    public function reorderImages(Request $request, Tenant $club, Court $court): JsonResponse
+    {
+        if ($denied = $this->denyUnlessMember($club)) {
+            return $denied;
+        }
+
+        if (! $this->belongsToClub($club, $court->tenant_id)) {
+            return $this->errorResponse('Court not found in this club.', code: Response::HTTP_NOT_FOUND);
+        }
+
+        $data = $request->validate([
+            'image_ids' => ['required', 'array', 'min:1'],
+            'image_ids.*' => ['required', 'integer'],
+        ]);
+
+        foreach (array_values($data['image_ids']) as $index => $imageId) {
+            CourtImage::query()
+                ->where('id', $imageId)
+                ->where('court_id', $court->id)
+                ->update(['sort_order' => $index + 1]);
+        }
+
+        return $this->successResponse(
+            data: Contract::court($court->load('images')),
+            message: 'Photo order saved.'
         );
     }
 
@@ -91,7 +199,7 @@ class CourtController extends Controller
         }
 
         return $this->successResponse(
-            data: Contract::courtDetail($court->load(['operatingHours', 'priceRules']))
+            data: Contract::courtDetail($court->load(['operatingHours', 'priceRules', 'images']))
         );
     }
 
@@ -132,7 +240,7 @@ class CourtController extends Controller
         $court->save();
 
         return $this->successResponse(
-            data: Contract::courtDetail($court->load(['operatingHours', 'priceRules'])),
+            data: Contract::courtDetail($court->load(['operatingHours', 'priceRules', 'images'])),
             message: 'Court updated.'
         );
     }

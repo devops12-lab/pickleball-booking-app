@@ -19,8 +19,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -266,8 +266,8 @@ class CommunityController extends Controller
             'contact_phone' => ['nullable', 'string'],
             'join_policy' => ['required', 'in:open,approval'],
             'cancellation_hours' => ['required', 'integer', 'between:0,72'],
-            'logo_url' => ['nullable', 'string', 'max:1500000', 'regex:/^(data:image\/(png|jpeg|webp);base64,|https:\/\/)/'],
-            'cover_url' => ['nullable', 'string', 'max:1500000', 'regex:/^(data:image\/(png|jpeg|webp);base64,|https:\/\/)/'],
+            'logo_url' => ['nullable', 'string', 'max:700000', 'regex:/^(data:image\/(png|jpeg|webp);base64,|https:\/\/)/'],
+            'cover_url' => ['nullable', 'string', 'max:700000', 'regex:/^(data:image\/(png|jpeg|webp);base64,|https:\/\/)/'],
             'waiver' => ['required', 'string', 'min:40', 'max:6000'],
             'payment_options.in_person' => ['boolean'],
             'payment_options.gcash' => ['nullable', 'array'],
@@ -301,9 +301,13 @@ class CommunityController extends Controller
                 $errors[$wallet.'_number'] = ['Enter the 11-digit number, like 09171234567.'];
             }
 
-            if (filled($row['qr_url'] ?? null)
-                && preg_match('/^data:image\/(png|jpeg|webp);base64,/', (string) $row['qr_url']) !== 1) {
-                $errors[$wallet.'_qr'] = ['Upload the QR code as a PNG, JPG or WebP image.'];
+            if (filled($row['qr_url'] ?? null)) {
+                $qr = (string) $row['qr_url'];
+                if (preg_match('/^data:image\/(png|jpeg|webp);base64,/', $qr) !== 1) {
+                    $errors[$wallet.'_qr'] = ['Upload the QR code as a PNG, JPG or WebP image.'];
+                } elseif (strlen($qr) > 700_000) {
+                    $errors[$wallet.'_qr'] = ['That QR image is too large. Use one under 500 KB.'];
+                }
             }
         }
 
@@ -455,11 +459,10 @@ class CommunityController extends Controller
         $minutes = (int) round(($end->getTimestamp() - $start->getTimestamp()) / 60);
         $exclude = trim((string) $request->query('exclude_session', ''));
 
-        $tenant->loadMissing('courts');
+        $tenant->loadMissing('courts.operatingHours', 'courts.priceRules');
         $options = $tenant->courts
             ->filter(fn (Court $court): bool => Contract::court($court)['status'] === 'active')
             ->map(function (Court $court) use ($start, $end, $minutes, $timezone, $exclude): array {
-                $court->loadMissing(['operatingHours', 'priceRules']);
 
                 return [
                     'id' => (string) $court->id,

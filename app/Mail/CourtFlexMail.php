@@ -2,12 +2,16 @@
 
 namespace App\Mail;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
 class CourtFlexMail extends Mailable
 {
+    use Queueable, SerializesModels;
+
     /**
      * @param  list<string>  $lines
      */

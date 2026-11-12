@@ -10,11 +10,24 @@ use Illuminate\Support\Str;
 class DatabaseRestoreLog extends Model
 {
     /**
-     * The attributes that aren't mass assignable.
+     * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'uuid',
+        'database_backup_id',
+        'original_filename',
+        'database_driver',
+        'database_name',
+        'restore_status',
+        'started_at',
+        'completed_at',
+        'duration_seconds',
+        'executed_by',
+        'error_message',
+        'metadata',
+    ];
 
     /**
      * Get the attributes that should be cast.

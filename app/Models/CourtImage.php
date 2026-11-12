@@ -24,11 +24,15 @@ class CourtImage extends Model
     public const MAX_PER_COURT = 5;
 
     /**
-     * The attributes that aren't mass assignable.
+     * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'court_id',
+        'image_path',
+        'sort_order',
+    ];
 
     /**
      * Get the attributes that should be cast.

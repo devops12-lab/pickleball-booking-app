@@ -173,9 +173,19 @@ class StaffAuthController extends Controller
      */
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $request->user()->update([
+        $user = $request->user();
+
+        $user->update([
             'password' => Hash::make($request->validated('password')),
         ]);
+
+        // Revoke all tokens except the current one so other sessions are invalidated.
+        $currentToken = $user->currentAccessToken();
+        if ($currentToken && method_exists($currentToken, 'getKey')) {
+            $user->tokens()->where('id', '!=', $currentToken->getKey())->delete();
+        } else {
+            $user->tokens()->delete();
+        }
 
         return $this->successResponse(message: 'Password changed successfully.');
     }

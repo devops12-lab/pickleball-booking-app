@@ -9,6 +9,18 @@ use App\Models\CourtOperatingHour;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
+/**
+ * Determines whether a court is available for booking in a given time window.
+ *
+ * Checks are performed in order: court active status, operating hours,
+ * blocked/maintenance schedules, and conflicting active bookings.
+ * Operating hours are compared in the facility's wall-clock timezone;
+ * blocked schedules and bookings are compared in UTC.
+ *
+ * @security This service performs read-only checks. Callers must use
+ *           lockForUpdate() around the availability check + booking creation
+ *           to prevent double-booking under concurrency.
+ */
 class BookingAvailabilityService
 {
     /**
@@ -55,7 +67,7 @@ class BookingAvailabilityService
     /**
      * Verify if the given window falls strictly within court operating hours.
      */
-    public function isWithinOperatingHours(Court $court, Carbon $start, Carbon $end): bool
+    public function isWithinOperatingHours(Court $court, CarbonInterface $start, CarbonInterface $end): bool
     {
         $dayOfWeek = $start->dayOfWeek; // 0=Sunday..6=Saturday
         $operatingHour = CourtOperatingHour::where('court_id', $court->id)
@@ -98,7 +110,7 @@ class BookingAvailabilityService
     /**
      * Check if there are overlapping active bookings.
      */
-    public function hasConflictingBooking(Court $court, Carbon $start, Carbon $end, ?int $excludeBookingId = null): bool
+    public function hasConflictingBooking(Court $court, CarbonInterface $start, CarbonInterface $end, ?int $excludeBookingId = null): bool
     {
         return Booking::where('court_id', $court->id)
             ->whereIn('status', ['pending', 'confirmed'])

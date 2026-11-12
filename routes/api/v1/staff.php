@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->name('auth.')->group(function (): void {
     Route::post('/login', [StaffAuthController::class, 'login'])->middleware('throttle:login')->name('login');
     Route::post('/google', [StaffAuthController::class, 'google'])->middleware('throttle:login')->name('google');
-    Route::post('/accept-invitation', [StaffAuthController::class, 'acceptInvitation'])->name('accept_invitation');
+    Route::post('/accept-invitation', [StaffAuthController::class, 'acceptInvitation'])->middleware('throttle:sensitive')->name('accept_invitation');
     Route::post('/forgot-password', [StaffAuthController::class, 'forgotPassword'])->middleware('throttle:forgot-password')->name('password.forgot');
     Route::post('/reset-password', [StaffAuthController::class, 'resetPassword'])->middleware('throttle:password-reset')->name('password.reset');
 

@@ -64,7 +64,7 @@ class AuthenticationService
      */
     public function buildAuthResponse(User $user, string $activeRole, ?int $tenantId = null, string $message = 'Authentication successful.'): array
     {
-        $token = $this->tokenService->createToken($user, "{$activeRole}_auth_token");
+        $token = $this->tokenService->createRoleToken($user, $activeRole);
 
         // Determine active context if tenantId provided or found on user's memberships
         $context = null;

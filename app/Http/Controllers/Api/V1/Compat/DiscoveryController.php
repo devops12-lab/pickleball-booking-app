@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponse;
 use App\Models\Court;
 use App\Models\CourtBlockedSchedule;
-use App\Models\OpenPlaySession;
 use App\Models\Tenant;
+use App\Models\VenueProfile;
 use App\Services\BookingAvailabilityService;
 use App\Support\Compat\Contract;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -80,9 +82,14 @@ class DiscoveryController extends Controller
         $lat = $hasPoint ? (float) $latRaw : 0.0;
         $lng = $hasPoint ? (float) $lngRaw : 0.0;
 
-        $tenants = Tenant::query()
-            ->with(['venueProfile', 'subscription', 'courts.operatingHours', 'courts.priceRules'])
-            ->get();
+        $tenants = Cache::remember('discovery:tenants', 60, function () {
+            return Tenant::query()
+                ->with(['venueProfile', 'subscription', 'courts.operatingHours', 'courts.priceRules'])
+                ->withCount(['openPlaySessions as upcoming_session_count' => function ($query): void {
+                    $query->where('starts_at', '>=', now())->where('status', '!=', 'cancelled');
+                }])
+                ->get();
+        });
 
         $results = [];
 
@@ -185,11 +192,7 @@ class DiscoveryController extends Controller
                 'currency' => Contract::CURRENCY,
                 'open_now' => $today !== null && $nowClock >= $today['opens_at'] && $nowClock < $today['closes_at'],
                 'today' => $today,
-                'upcoming_session_count' => OpenPlaySession::query()
-                    ->where('tenant_id', $tenant->id)
-                    ->where('starts_at', '>=', now())
-                    ->where('status', '!=', 'cancelled')
-                    ->count(),
+                'upcoming_session_count' => (int) $tenant->upcoming_session_count,
                 'bookable' => $bookable,
                 'guest_booking' => $bookable && (bool) ($settings['allow_guest_booking'] ?? false),
                 'next_free_at' => $free['next'],
@@ -389,7 +392,7 @@ class DiscoveryController extends Controller
     /**
      * A court is public only while its venue is approved, not read-only, and pinned.
      *
-     * @return array{0: Tenant, 1: \App\Models\VenueProfile, 2: array<string, mixed>}|null
+     * @return array{0: Tenant, 1: VenueProfile, 2: array<string, mixed>}|null
      */
     private function venue(Court $court): ?array
     {
@@ -418,7 +421,7 @@ class DiscoveryController extends Controller
     /**
      * Today's opening range across the courts, in the venue's own time.
      *
-     * @param  \Illuminate\Support\Collection<int, Court>  $courts
+     * @param  Collection<int, Court>  $courts
      * @return array{opens_at: string, closes_at: string}|null
      */
     private function todayHours($courts, string $timezone): ?array
@@ -450,7 +453,7 @@ class DiscoveryController extends Controller
     /**
      * Free one-hour starts left today across these courts, and the earliest.
      *
-     * @param  \Illuminate\Support\Collection<int, Court>  $courts
+     * @param  Collection<int, Court>  $courts
      * @return array{next: string|null, count: int}
      */
     private function freeToday($courts, string $timezone): array

@@ -34,6 +34,8 @@ class OpenPlaySession extends Model
         'status_reason',
         'court_fee',
         'queue_version',
+        'skill_level_min',
+        'skill_level_max',
     ];
 
     protected function casts(): array

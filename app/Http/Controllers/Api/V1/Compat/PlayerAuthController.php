@@ -106,7 +106,9 @@ class PlayerAuthController extends Controller
         }
 
         Auth::guard('web')->login($user);
-        $request->session()->regenerate();
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
         return $this->successResponse(
             data: MePayload::for($user->fresh()),
@@ -553,8 +555,10 @@ class PlayerAuthController extends Controller
         // with the new password anyway.
         if (Auth::guard('web')->id() === $user->id) {
             Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
         }
 
         DB::table('password_reset_tokens')->where('email', $record->email)->delete();

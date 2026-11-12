@@ -670,14 +670,16 @@ class PlayerBookingController extends Controller
 
     protected function overlap(Court $court, CarbonImmutable $start, CarbonImmutable $end): ?Booking
     {
-        $found = Booking::query()
+        // lockForUpdate prevents concurrent inserts from slipping through
+        // between this check and the subsequent Booking::create() within the
+        // same DB::transaction() that callers must hold.
+        return Booking::query()
+            ->lockForUpdate()
             ->where('court_id', $court->id)
             ->whereIn('status', ['pending', 'confirmed'])
             ->where('starts_at', '<', $end->setTimezone('UTC')->toDateTimeString())
             ->where('ends_at', '>', $start->setTimezone('UTC')->toDateTimeString())
             ->first();
-
-        return $found;
     }
 
     /**

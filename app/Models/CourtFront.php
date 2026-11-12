@@ -30,11 +30,24 @@ class CourtFront extends Model
     use BelongsToTenant;
 
     /**
-     * The attributes that aren't mass assignable.
+     * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'tenant_id',
+        'tagline',
+        'description',
+        'logo',
+        'cover_image',
+        'contact_email',
+        'contact_phone',
+        'contact_address',
+        'website',
+        'facebook',
+        'instagram',
+        'is_open',
+    ];
 
     /**
      * Get the attributes that should be cast.

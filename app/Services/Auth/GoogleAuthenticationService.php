@@ -19,9 +19,15 @@ class GoogleAuthenticationService
 
     /**
      * Fake a Google user verification for automated testing.
+     *
+     * @throws \RuntimeException If called outside testing environment.
      */
     public static function fake(?array $userPayload = null): void
     {
+        if (! app()->runningUnitTests()) {
+            throw new \RuntimeException('GoogleAuthenticationService::fake() may only be called in tests.');
+        }
+
         if ($userPayload !== null) {
             static::$fakeGoogleUser = [
                 'id' => (string) ($userPayload['id'] ?? $userPayload['sub'] ?? 'google-test-id-12345'),
@@ -60,7 +66,16 @@ class GoogleAuthenticationService
             return static::$fakeGoogleUser;
         }
 
-        // Decode token without verification to read header or payload
+        // In production the Google API Client library MUST verify the JWT signature
+        // against Google's public keys. The lightweight decode below is only safe for
+        // local development where forged tokens pose no risk.
+        if (app()->environment('production')) {
+            throw new InvalidArgumentException(
+                'Google OAuth signature verification is not yet implemented. '
+                .'Install google/apiclient and verify the ID token with Google_Client::verifyIdToken() before going live.'
+            );
+        }
+
         try {
             $parts = explode('.', $idToken);
             if (count($parts) !== 3) {
@@ -77,7 +92,6 @@ class GoogleAuthenticationService
                 throw new InvalidArgumentException('Google ID token has expired.');
             }
 
-            // In production, fetch Google public keys and verify signature
             $expectedIssuers = ['accounts.google.com', 'https://accounts.google.com'];
             if (isset($payload['iss']) && ! in_array($payload['iss'], $expectedIssuers, true)) {
                 throw new InvalidArgumentException('Google ID token has invalid issuer.');

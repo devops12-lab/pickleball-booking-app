@@ -49,9 +49,6 @@ class GeoLocation extends Model
     /**
      * The chain from barangay up to country, or null when the barangay is unknown.
      *
-     * Keyed lookups: the table holds the whole country (~44k rows), so loading
-     * it per request just to resolve five nodes would be wasteful.
-     *
      * @return array{country: GeoLocation, region: GeoLocation, province: GeoLocation, city: GeoLocation, barangay: GeoLocation}|null
      */
     public static function chain(?string $barangayId): ?array
@@ -76,6 +73,76 @@ class GeoLocation extends Model
         }
 
         return compact('country', 'region', 'province', 'city', 'barangay');
+    }
+
+    /**
+     * Batch-resolve multiple barangay chains in at most 2 queries instead of 5×N.
+     *
+     * First query loads the barangays and collects parent IDs up the tree.
+     * Second query loads every ancestor. Chains are then assembled from the
+     * keyed collection with no further database hits.
+     *
+     * @param  list<string|null>  $barangayIds
+     * @return array<string, array{country: GeoLocation, region: GeoLocation, province: GeoLocation, city: GeoLocation, barangay: GeoLocation}|null>
+     */
+    public static function chains(array $barangayIds): array
+    {
+        $uniqueIds = array_values(array_filter(array_unique($barangayIds)));
+
+        if ($uniqueIds === []) {
+            return [];
+        }
+
+        // 1. Load barangays and walk parent_id pointers to collect ancestor IDs.
+        $barangays = self::query()->whereIn('id', $uniqueIds)->get()->keyBy('id');
+        $ancestorIds = [];
+
+        foreach ($barangays as $node) {
+            if ($node->parent_id !== null) {
+                $ancestorIds[] = $node->parent_id;
+            }
+        }
+
+        // 2. Load all potential ancestors (cities) and continue walking up.
+        //    We iterate level-by-level (city→province→region→country) collecting IDs.
+        $allNodes = clone $barangays;
+        for ($level = 0; $level < 4 && $ancestorIds !== []; $level++) {
+            $batch = self::query()->whereIn('id', array_unique($ancestorIds))->get()->keyBy('id');
+            $allNodes = $allNodes->merge($batch);
+
+            $ancestorIds = [];
+            foreach ($batch as $node) {
+                if ($node->parent_id !== null && ! $allNodes->has($node->parent_id)) {
+                    $ancestorIds[] = $node->parent_id;
+                }
+            }
+        }
+
+        // 3. Assemble chains from the keyed collection — zero extra queries.
+        $result = [];
+        foreach ($uniqueIds as $id) {
+            $barangay = $allNodes->get($id);
+            if ($barangay === null || $barangay->level !== 'barangay') {
+                $result[$id] = null;
+
+                continue;
+            }
+
+            $city = $barangay->parent_id ? $allNodes->get($barangay->parent_id) : null;
+            $province = $city?->parent_id ? $allNodes->get($city->parent_id) : null;
+            $region = $province?->parent_id ? $allNodes->get($province->parent_id) : null;
+            $country = $region?->parent_id ? $allNodes->get($region->parent_id) : null;
+
+            if ($city === null || $province === null || $region === null || $country === null) {
+                $result[$id] = null;
+
+                continue;
+            }
+
+            $result[$id] = compact('country', 'region', 'province', 'city', 'barangay');
+        }
+
+        return $result;
     }
 
     /**

@@ -30,6 +30,7 @@ class PlayerDirectoryController extends Controller
         }
 
         $players = User::query()
+            ->select('id', 'name', 'phone')
             ->where(fn ($query) => $query
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")

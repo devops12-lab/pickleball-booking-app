@@ -28,11 +28,21 @@ class TenantPaymentMethod extends Model
     use BelongsToTenant;
 
     /**
-     * The attributes that aren't mass assignable.
+     * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'tenant_id',
+        'name',
+        'type',
+        'account_name',
+        'account_number',
+        'instructions',
+        'qr_image',
+        'is_active',
+        'sort_order',
+    ];
 
     /**
      * Default model attributes.

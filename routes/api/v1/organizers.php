@@ -23,7 +23,7 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('/change-password', [OrganizerAuthController::class, 'changePassword'])->middleware('throttle:sensitive')->name('password.change');
         Route::post('/logout', [OrganizerAuthController::class, 'logout'])->name('logout');
         Route::post('/tokens/revoke-all', [OrganizerAuthController::class, 'revokeAll'])->name('tokens.revoke_all');
-        Route::post('/accept-assignment', [OrganizerAuthController::class, 'acceptAssignment'])->name('accept_assignment');
+        Route::post('/accept-assignment', [OrganizerAuthController::class, 'acceptAssignment'])->middleware('throttle:sensitive')->name('accept_assignment');
     });
 });
 

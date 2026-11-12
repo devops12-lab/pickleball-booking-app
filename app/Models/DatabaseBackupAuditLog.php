@@ -9,11 +9,19 @@ use Illuminate\Support\Str;
 class DatabaseBackupAuditLog extends Model
 {
     /**
-     * The attributes that aren't mass assignable.
+     * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'uuid',
+        'action',
+        'user_id',
+        'database_backup_id',
+        'ip_address',
+        'user_agent',
+        'metadata',
+    ];
 
     /**
      * Get the attributes that should be cast.

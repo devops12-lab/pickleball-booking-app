@@ -3,6 +3,7 @@
 namespace App\Support\Compat;
 
 use App\Models\RatingRule;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * The rating rules the Super Admin can edit. They drive new-player ratings,
@@ -18,19 +19,23 @@ class RatingRules
         'k_established' => 24,
     ];
 
+    private const CACHE_KEY = 'rating_rules';
+
     /**
      * @return array<string, int>
      */
     public static function current(): array
     {
-        $row = RatingRule::query()->first();
+        return Cache::remember(self::CACHE_KEY, 86400, function () {
+            $row = RatingRule::query()->first();
 
-        return $row === null ? self::DEFAULTS : [
-            'initial' => (int) $row->initial,
-            'provisional_matches' => (int) $row->provisional_matches,
-            'k_provisional' => (int) $row->k_provisional,
-            'k_established' => (int) $row->k_established,
-        ];
+            return $row === null ? self::DEFAULTS : [
+                'initial' => (int) $row->initial,
+                'provisional_matches' => (int) $row->provisional_matches,
+                'k_provisional' => (int) $row->k_provisional,
+                'k_established' => (int) $row->k_established,
+            ];
+        });
     }
 
     /**
@@ -41,6 +46,8 @@ class RatingRules
     {
         $row = RatingRule::query()->firstOrCreate([], self::DEFAULTS);
         $row->fill($rules)->save();
+
+        Cache::forget(self::CACHE_KEY);
 
         return self::current();
     }

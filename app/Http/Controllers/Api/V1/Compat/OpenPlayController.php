@@ -52,9 +52,22 @@ class OpenPlayController extends Controller
 
         $search = mb_strtolower(trim((string) $request->query('search', '')));
 
-        $sessions = OpenPlaySession::query()
+        $query = OpenPlaySession::query()
             ->with(['court', 'courts', 'host', 'tenant.venueProfile', 'tenant.subscription', 'organizerClub', 'participants.user'])
-            ->get()
+            ->where('status', '!=', 'cancelled');
+
+        // Narrow the window so old completed sessions don't pile up.
+        if ($scope === 'past') {
+            $query->where('ends_at', '<=', now())
+                ->where('ends_at', '>=', now()->subDays(90));
+        } elseif ($scope === 'upcoming') {
+            $query->where(function ($q): void {
+                $q->whereNull('ends_at')
+                    ->orWhere('ends_at', '>', now());
+            });
+        }
+
+        $sessions = $query->latest('starts_at')->limit(500)->get()
             ->filter(function (OpenPlaySession $session) use ($viewer, $scope): bool {
                 $status = Contract::openPlayStatus($session);
                 $joined = $viewer !== null && $session->participants
@@ -535,49 +548,62 @@ class OpenPlayController extends Controller
                     );
                 }
 
-                $active = $this->activeCount($session);
-                $full = $active >= (int) $session->max_participants;
+                // Lock the session row to prevent over-capacity under concurrency.
+                $result = DB::transaction(function () use ($session, $action, $viewer, $member) {
+                    OpenPlaySession::lockForUpdate()->find($session->id);
 
-                if ($action === 'join' && $full) {
+                    $active = $this->activeCount($session);
+                    $full = $active >= (int) $session->max_participants;
+
+                    if ($action === 'join' && $full) {
+                        return 'full';
+                    }
+
+                    if ($action === 'waitlist' && ! $full) {
+                        return 'not_full';
+                    }
+
+                    $fee = $member ? (string) $session->member_fee : (string) $session->fee;
+
+                    $fields = [
+                        'status' => $full ? 'waitlisted' : 'registered',
+                        'waitlist_position' => $full
+                            ? $session->participants()->where('status', 'waitlisted')->count() + 1
+                            : null,
+                        'fee_due' => $full ? 0 : $fee,
+                        'fee_status' => $full || (float) $fee <= 0 ? 'free' : 'unpaid',
+                        'is_member' => $member,
+                        'checked_in_at' => null,
+                        'queue_state' => null,
+                        'games_played' => 0,
+                    ];
+
+                    $returning = $session->participants()
+                        ->where('user_id', $viewer)
+                        ->where('status', 'cancelled')
+                        ->first();
+
+                    if ($returning !== null) {
+                        $returning->update($fields);
+                    } else {
+                        $session->participants()->create(['user_id' => $viewer] + $fields);
+                    }
+
+                    return 'ok';
+                });
+
+                if ($result === 'full') {
                     return $this->errorResponse(
                         message: 'This session is full. Join the waitlist to get the next open spot.',
                         code: Response::HTTP_CONFLICT,
                     );
                 }
 
-                if ($action === 'waitlist' && ! $full) {
+                if ($result === 'not_full') {
                     return $this->errorResponse(
                         message: 'There are open spots. Register instead.',
                         code: Response::HTTP_CONFLICT,
                     );
-                }
-
-                $fee = $member ? (string) $session->member_fee : (string) $session->fee;
-
-                $fields = [
-                    'status' => $full ? 'waitlisted' : 'registered',
-                    'waitlist_position' => $full
-                        ? $session->participants()->where('status', 'waitlisted')->count() + 1
-                        : null,
-                    'fee_due' => $full ? 0 : $fee,
-                    'fee_status' => $full || (float) $fee <= 0 ? 'free' : 'unpaid',
-                    'is_member' => $member,
-                    'checked_in_at' => null,
-                    'queue_state' => null,
-                    'games_played' => 0,
-                ];
-
-                // One row per player per session, so someone who left rejoins
-                // through the old row instead of a second one.
-                $returning = $session->participants()
-                    ->where('user_id', $viewer)
-                    ->where('status', 'cancelled')
-                    ->first();
-
-                if ($returning !== null) {
-                    $returning->update($fields);
-                } else {
-                    $session->participants()->create(['user_id' => $viewer] + $fields);
                 }
 
                 break;
@@ -607,15 +633,17 @@ class OpenPlayController extends Controller
                     );
                 }
 
-                $mine->update([
-                    'status' => 'cancelled',
-                    'waitlist_position' => null,
-                    'queue_state' => null,
-                    'queue_position' => null,
-                    'queue_since' => null,
-                ]);
-                $this->promoteFromWaitlist($session);
-                $this->renumberWaitlist($session);
+                DB::transaction(function () use ($mine, $session): void {
+                    $mine->update([
+                        'status' => 'cancelled',
+                        'waitlist_position' => null,
+                        'queue_state' => null,
+                        'queue_position' => null,
+                        'queue_since' => null,
+                    ]);
+                    $this->promoteFromWaitlist($session);
+                    $this->renumberWaitlist($session);
+                });
 
                 break;
 
@@ -1105,9 +1133,6 @@ class OpenPlayController extends Controller
         return $this->successResponse(data: Contract::openPlayDetail($session->fresh(), $viewer));
     }
 
-    /**
-     * @return object|null
-     */
     private function membership(OpenPlaySession $session, int $userId): ?object
     {
         if ($session->organizer_type !== 'community') {

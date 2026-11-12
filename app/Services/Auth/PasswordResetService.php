@@ -7,8 +7,19 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
+/**
+ * Handles password reset token generation and password updates.
+ *
+ * Tokens are stored hashed in the password_reset_tokens table and verified
+ * with Hash::check(). All active sessions (tokens) are revoked on reset.
+ *
+ * @security The sendResetToken() method does not currently dispatch email.
+ */
 class PasswordResetService
 {
+    /** Reset tokens expire after this many minutes. */
+    private const TOKEN_EXPIRATION_MINUTES = 60;
+
     /**
      * Generate and record password reset token for the given email.
      *
@@ -34,6 +45,7 @@ class PasswordResetService
     {
         $record = DB::table('password_reset_tokens')
             ->where('email', $email)
+            ->where('created_at', '>=', now()->subMinutes(self::TOKEN_EXPIRATION_MINUTES))
             ->first();
 
         if (! $record || ! Hash::check($token, $record->token)) {

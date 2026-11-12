@@ -18,6 +18,7 @@ use App\Support\Compat\NotificationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -89,32 +90,41 @@ class BookingController extends Controller
         $startsLocal = CarbonImmutable::parse($data['starts_at'])->setTimezone($timezone);
         $endsLocal = CarbonImmutable::parse($data['ends_at'])->setTimezone($timezone);
 
-        if (! $this->availabilityService->isAvailable(
-            $court,
-            $startsLocal->toDateTimeString(),
-            $endsLocal->toDateTimeString(),
-            null,
-            $timezone
-        )) {
-            return $this->errorResponse('That slot is no longer available.', code: Response::HTTP_CONFLICT);
-        }
-
         $hours = ($endsLocal->getTimestamp() - $startsLocal->getTimestamp()) / 3600;
         $total = number_format((float) $court->hourly_rate * $hours, 2, '.', '');
 
-        $booking = Booking::create([
-            'tenant_id' => $club->id,
-            'court_id' => $court->id,
-            'user_id' => $player->id,
-            'created_by' => $request->user()->id,
-            'booking_reference' => 'BK-'.strtoupper(Str::random(8)),
-            'starts_at' => $startsLocal->setTimezone('UTC')->toDateTimeString(),
-            'ends_at' => $endsLocal->setTimezone('UTC')->toDateTimeString(),
-            'total_amount' => $total,
-            'status' => 'confirmed',
-            'source' => 'staff_walk_in',
-            'notes' => $data['notes'] ?? null,
-        ]);
+        // Lock the court row to prevent double-booking under concurrency.
+        $booking = DB::transaction(function () use ($court, $club, $player, $request, $data, $startsLocal, $endsLocal, $timezone, $total) {
+            Court::lockForUpdate()->find($court->id);
+
+            if (! $this->availabilityService->isAvailable(
+                $court,
+                $startsLocal->toDateTimeString(),
+                $endsLocal->toDateTimeString(),
+                null,
+                $timezone
+            )) {
+                return null;
+            }
+
+            return Booking::create([
+                'tenant_id' => $club->id,
+                'court_id' => $court->id,
+                'user_id' => $player->id,
+                'created_by' => $request->user()->id,
+                'booking_reference' => 'BK-'.strtoupper(Str::random(8)),
+                'starts_at' => $startsLocal->setTimezone('UTC')->toDateTimeString(),
+                'ends_at' => $endsLocal->setTimezone('UTC')->toDateTimeString(),
+                'total_amount' => $total,
+                'status' => 'confirmed',
+                'source' => 'staff_walk_in',
+                'notes' => $data['notes'] ?? null,
+            ]);
+        });
+
+        if ($booking === null) {
+            return $this->errorResponse('That slot is no longer available.', code: Response::HTTP_CONFLICT);
+        }
 
         return $this->successResponse(
             data: Contract::bookingDetail($booking->fresh()),
@@ -231,6 +241,7 @@ class BookingController extends Controller
             ->whereHas('receipts', fn ($query) => $query->where('status', 'in_review'))
             ->with(['user', 'creator', 'payments', 'receipts.reviewer'])
             ->orderBy('starts_at')
+            ->limit(100)
             ->get();
 
         return $this->successResponse(
@@ -257,38 +268,40 @@ class BookingController extends Controller
         $rejection = null;
 
         if ($action === 'approve') {
-            $receipt->update([
-                'status' => 'approved',
-                'reviewed_by' => $request->user()->id,
-                'reviewed_at' => now(),
-            ]);
-
-            $paid = (float) $booking->payments()
-                ->whereIn('status', ['verified', 'paid'])
-                ->sum('amount');
-            $due = (float) $booking->total_amount - $paid;
-
-            if ($due > 0) {
-                $reference = $receipt->reference_number;
-                $taken = Payment::where('transaction_reference', $reference)->exists();
-
-                Payment::create([
-                    'tenant_id' => $club->id,
-                    'booking_id' => $booking->id,
-                    'user_id' => $request->user()->id,
-                    'amount' => number_format($due, 2, '.', ''),
-                    'currency' => Contract::CURRENCY,
-                    'payment_method' => $booking->payment_method === 'maya' ? 'maya' : 'gcash',
-                    'transaction_reference' => $taken || $reference === ''
-                        ? 'PMT-'.strtoupper(Str::random(10))
-                        : $reference,
-                    'status' => 'verified',
+            DB::transaction(function () use ($receipt, $booking, $club, $request): void {
+                $receipt->update([
+                    'status' => 'approved',
+                    'reviewed_by' => $request->user()->id,
+                    'reviewed_at' => now(),
                 ]);
-            }
 
-            if ($booking->status === 'pending') {
-                $booking->update(['status' => 'confirmed']);
-            }
+                $paid = (float) $booking->payments()
+                    ->whereIn('status', ['verified', 'paid'])
+                    ->sum('amount');
+                $due = (float) $booking->total_amount - $paid;
+
+                if ($due > 0) {
+                    $reference = $receipt->reference_number;
+                    $taken = Payment::where('transaction_reference', $reference)->exists();
+
+                    Payment::create([
+                        'tenant_id' => $club->id,
+                        'booking_id' => $booking->id,
+                        'user_id' => $request->user()->id,
+                        'amount' => number_format($due, 2, '.', ''),
+                        'currency' => Contract::CURRENCY,
+                        'payment_method' => $booking->payment_method === 'maya' ? 'maya' : 'gcash',
+                        'transaction_reference' => $taken || $reference === ''
+                            ? 'PMT-'.strtoupper(Str::random(10))
+                            : $reference,
+                        'status' => 'verified',
+                    ]);
+                }
+
+                if ($booking->status === 'pending') {
+                    $booking->update(['status' => 'confirmed']);
+                }
+            });
         } else {
             $data = $request->validate([
                 'reason' => ['required', 'string', 'max:255'],

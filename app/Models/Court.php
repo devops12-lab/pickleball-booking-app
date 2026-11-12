@@ -29,6 +29,7 @@ class Court extends Model
         return [
             'hourly_rate' => 'decimal:2',
             'is_active' => 'boolean',
+            'status' => 'string',
         ];
     }
 

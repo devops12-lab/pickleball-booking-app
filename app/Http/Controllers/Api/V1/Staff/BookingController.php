@@ -11,6 +11,7 @@ use App\Models\BookingStatusHistory;
 use App\Services\TenantContextService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class BookingController extends Controller
@@ -70,16 +71,18 @@ class BookingController extends Controller
 
         $validated = $request->validated();
 
-        $oldStatus = $booking->status;
-        $booking->update(['status' => $validated['status']]);
+        DB::transaction(function () use ($booking, $validated, $request): void {
+            $oldStatus = $booking->status;
+            $booking->update(['status' => $validated['status']]);
 
-        BookingStatusHistory::create([
-            'booking_id' => $booking->id,
-            'changed_by' => $request->user()->id,
-            'from_status' => $oldStatus,
-            'to_status' => $validated['status'],
-            'reason' => $validated['reason'] ?? 'Updated by staff',
-        ]);
+            BookingStatusHistory::create([
+                'booking_id' => $booking->id,
+                'changed_by' => $request->user()->id,
+                'from_status' => $oldStatus,
+                'to_status' => $validated['status'],
+                'reason' => $validated['reason'] ?? 'Updated by staff',
+            ]);
+        });
 
         return $this->successResponse(
             data: new BookingResource($booking->fresh()),

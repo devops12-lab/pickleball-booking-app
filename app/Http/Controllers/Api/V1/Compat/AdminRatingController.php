@@ -48,9 +48,11 @@ class AdminRatingController extends Controller
             ->get()
             ->keyBy('user_id');
 
-        $rows = $profiles
-            ->filter(fn (PlayerProfile $profile): bool => $profile->user !== null)
-            ->map(function (PlayerProfile $profile) use ($stats, $rules): array {
+        $filtered = $profiles->filter(fn (PlayerProfile $profile): bool => $profile->user !== null);
+        $geoChains = GeoLocation::chains($filtered->pluck('barangay_id')->all());
+
+        $rows = $filtered
+            ->map(function (PlayerProfile $profile) use ($stats, $rules, $geoChains): array {
                 $stat = $stats->get($profile->user_id);
                 $side = function (string $type) use ($stat, $rules): array {
                     $rating = (int) round((float) ($stat?->{$type.'_rating'} ?? $stat?->current_rating ?? $rules['initial']));
@@ -62,7 +64,7 @@ class AdminRatingController extends Controller
                         'provisional' => $games < $rules['provisional_matches'],
                     ];
                 };
-                $chain = GeoLocation::chain($profile->barangay_id);
+                $chain = $geoChains[$profile->barangay_id] ?? null;
 
                 return [
                     'player' => [

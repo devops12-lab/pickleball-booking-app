@@ -8,6 +8,12 @@ use App\Models\PaymentVerification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Handles payment approval and rejection workflows.
+ *
+ * Each operation runs in a database transaction and records an audit log entry.
+ * Approving a payment also transitions the associated booking to "confirmed".
+ */
 class PaymentVerificationService
 {
     public function __construct(

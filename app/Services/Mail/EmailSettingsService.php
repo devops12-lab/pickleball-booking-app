@@ -170,21 +170,28 @@ class EmailSettingsService
         ?string $actionUrl = null,
         ?string $actionLabel = null,
     ): bool {
-        try {
-            $this->send($to, $subject, $lines, $actionUrl, $actionLabel);
-
-            return true;
-        } catch (Throwable $error) {
-            Log::warning('Email not sent', [
+        if (! $this->isConfigured()) {
+            Log::info('Email not sent (SMTP not configured)', [
                 'to' => $to,
                 'subject' => $subject,
-                'error' => $error->getMessage(),
-                'lines' => $lines,
-                'url' => $actionUrl,
             ]);
 
             return false;
         }
+
+        defer(function () use ($to, $subject, $lines, $actionUrl, $actionLabel): void {
+            try {
+                $this->send($to, $subject, $lines, $actionUrl, $actionLabel);
+            } catch (Throwable $error) {
+                Log::warning('Email not sent', [
+                    'to' => $to,
+                    'subject' => $subject,
+                    'error' => $error->getMessage(),
+                ]);
+            }
+        });
+
+        return true;
     }
 
     public function frontendUrl(string $path = ''): string

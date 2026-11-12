@@ -9,11 +9,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DatabaseBackupSchedule extends Model
 {
     /**
-     * The attributes that aren't mass assignable.
+     * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'name',
+        'frequency',
+        'is_enabled',
+        'execution_time',
+        'day_of_week',
+        'day_of_month',
+        'timezone',
+        'retention_count',
+        'last_run_at',
+        'next_run_at',
+        'created_by',
+    ];
 
     /**
      * Get the attributes that should be cast.

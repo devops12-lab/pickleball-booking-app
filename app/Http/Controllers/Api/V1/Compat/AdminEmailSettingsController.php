@@ -82,9 +82,11 @@ class AdminEmailSettingsController extends Controller
                 'Open CourtFlex',
             );
         } catch (Throwable $error) {
+            report($error);
+
             return $this->errorResponse(
                 message: 'The test email could not be sent. Check the SMTP details and try again.',
-                errors: ['smtp' => [$error->getMessage()]],
+                errors: ['smtp' => ['Mail delivery failed. Check your SMTP host, port, and credentials.']],
                 code: Response::HTTP_UNPROCESSABLE_ENTITY,
             );
         }

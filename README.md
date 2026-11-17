@@ -71,9 +71,13 @@ Every user role has a distinct API route prefix, separate controllers, dedicated
 | [Database Backup & Restore](docs/DATABASE_BACKUP_RESTORE.md) | Backups, restore safety gates, scheduling, retention |
 | [Announcements](docs/ANNOUNCEMENTS.md) | Platform & tenant announcements, lifecycle, read tracking |
 | [Facility Management](docs/FACILITY_MANAGEMENT.md) | Staff credentials & positions, court images, payment methods, court front |
+| [Deployment Plan](docs/DEPLOYMENT_PLAN.md) | Production deployment stacks (LAMP, Docker, Cloud, AWS) |
 | [Development Setup & Testing](docs/DEVELOPMENT_SETUP.md) | Local environment and test suite |
 | [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) | Feature delivery plan |
 | [System Architecture & Execution Plan](docs/PLAN.md) | End-to-end build plan |
+
+> [!TIP]
+> The interactive **Backend Workflows** knowledge base is available at `/docs-work-flow` when the app is running. It provides verified, searchable documentation for every backend process.
 
 ## Quick Start
 
@@ -90,20 +94,40 @@ npm install
 cp .env.example .env
 php artisan key:generate
 
-# 3. Run migrations and seeders (demo accounts & courts included)
+# 3. Run migrations and structural seeders
 php artisan migrate:fresh --seed
 
-# 4. Start the development server
+# 4. (Optional) Seed demo accounts for every role
+php artisan db:seed --class=DemoAccountSeeder
+
+# 5. Start the development server
 php artisan serve
 ```
 
 > [!IMPORTANT]
-> **Default System Admin**
+> **Demo Accounts** (seeded by `DemoAccountSeeder` — all share password `Password123!`)
 >
-> | | |
+> | Role | Email |
 > | :--- | :--- |
-> | **Email** | `admin@courtflex.test` |
-> | **Password** | `Password123!` |
+> | System Admin | `admin@courtflex.test` |
+> | Facility Owner | `owner@courtflex.test` |
+> | Facility Staff | `staff@courtflex.test` |
+> | Player | `player@courtflex.test` |
+> | Club Organizer | `organizer@courtflex.test` |
+
+### Account Creation Commands
+
+Create individual accounts from the CLI without the web UI:
+
+```bash
+php artisan admin:create        # System administrator
+php artisan owner:create        # Facility owner + tenant
+php artisan staff:create        # Staff member at a facility
+php artisan player:create       # Player with profile & stats
+php artisan organizer:create    # Club organizer membership
+```
+
+Each command supports `--name`, `--email`, `--password` options for scripted provisioning. Run any command with `--help` for the full option list.
 
 ## Testing
 

@@ -15,7 +15,7 @@ beforeEach(function (): void {
 });
 
 test('system admin can access platform dashboard', function (): void {
-    $admin = User::where('email', 'admin@courtflex.test')->first();
+    $admin = createSystemAdmin();
 
     $response = $this->actingAs($admin)->getJson('/api/v1/admin/dashboard');
 
@@ -62,7 +62,7 @@ test('regular player cannot access platform dashboard', function (): void {
 });
 
 test('system admin can update tenant status', function (): void {
-    $admin = User::where('email', 'admin@courtflex.test')->first();
+    $admin = createSystemAdmin();
     $tenant = Tenant::first();
 
     $response = $this->actingAs($admin)

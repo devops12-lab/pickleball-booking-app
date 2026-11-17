@@ -21,6 +21,8 @@ beforeEach(function (): void {
     $this->seed(RolesAndPermissionsSeeder::class);
     $this->seed(PlatformAdminSeeder::class);
 
+    createSystemAdmin();
+
     $this->ownerRole = Role::where('name', 'owner')->first();
     $this->staffRole = Role::where('name', 'staff')->first();
     $this->playerRole = Role::where('name', 'player')->first();

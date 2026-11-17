@@ -75,6 +75,11 @@ class Club extends Model
         return $this->hasMany(ClubMembershipPayment::class);
     }
 
+    public function tournamentParticipants(): HasMany
+    {
+        return $this->hasMany(TournamentParticipant::class);
+    }
+
     /**
      * Resolve the route binding by either numeric ID or slug.
      */

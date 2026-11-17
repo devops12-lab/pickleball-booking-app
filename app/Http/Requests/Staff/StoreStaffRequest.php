@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Staff;
 
+use App\Rules\FullName;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreStaffRequest extends FormRequest
@@ -17,8 +18,10 @@ class StoreStaffRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email', 'exists:users,email'],
-            'role' => ['nullable', 'string', 'in:staff,owner'],
+            'name' => ['required', 'string', 'max:255', new FullName],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'role' => ['nullable', 'string', 'in:staff'],
         ];
     }
 }

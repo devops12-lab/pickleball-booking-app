@@ -33,7 +33,7 @@ The existing documents in `docs/` were compared with the code. They were **not e
 | [Database schema](../DATABASE_SCHEMA.md) | Payment status `rejected`. | `reject()` sets `failed`, and no route calls it. |
 | [Plan](../PLAN.md) | A `notifications` table and a `users.google_id` column. | Neither exists; Google identities are in `user_auth_providers`. |
 | [Plan](../PLAN.md) | Rate limiting of 10 attempts per minute on authentication routes. | The `login` limiter allows 5 per minute per email and IP. |
-| [Plan](../PLAN.md) | A `CourtFlexFoundationSeeder`. | The seeders are `DatabaseSeeder`, `DemoDataSeeder`, `PlatformAdminSeeder` and `RolesAndPermissionsSeeder`. |
+| [Plan](../PLAN.md) | A `CourtFlexFoundationSeeder`. | The seeders are `DatabaseSeeder`, `PlatformAdminSeeder`, `RolesAndPermissionsSeeder` and `GeoLocationSeeder`. Admin accounts are created via `php artisan admin:create`. |
 | [Implementation roadmap](../IMPLEMENTATION_ROADMAP.md) | 87 passing tests. | The suite has grown since; run `php artisan test` for the current count. |
 | [Architecture](../ARCHITECTURE.md) | The Google flow is listed among completed role gateways. | The Google token signature is not verified (see [Authentication](authentication.md)). |
 

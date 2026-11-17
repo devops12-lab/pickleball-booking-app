@@ -19,6 +19,7 @@ class TournamentResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
+            'banner_image' => $this->banner_image,
             'format' => $this->format,
             'starts_at' => $this->starts_at?->toISOString() ?? (string) $this->starts_at,
             'ends_at' => $this->ends_at?->toISOString() ?? (string) $this->ends_at,

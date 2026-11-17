@@ -27,12 +27,16 @@ By default, the API will be available at: `http://localhost:8000`
 > The root URL `http://localhost:8000/` returns `404 Not Found` by design.
 > The interactive endpoint catalog is accessible at: `http://localhost:8000/docs-api-endpoints`.
 
-### Step 2: Seed Demo Data
-Ensure the database has all seeded roles, demo facilities, courts, staff, players, and clubs:
+### Step 2: Seed & Create Admin
+Ensure the database has roles, permissions, subscription plans, and geographic data:
 
 ```bash
-php artisan db:seed
+php artisan migrate:fresh --seed
+php artisan admin:create
 ```
+
+> [!NOTE]
+> Demo accounts are no longer seeded automatically. Create the accounts you need through the API registration endpoints or the admin command. The sample payloads in [Section 5](#5-sample-raw-json-payloads-by-role) show how to register each role.
 
 ### Step 3: Import into Postman
 1. Open **Postman**.
@@ -71,17 +75,21 @@ if (pm.response.code === 200 || pm.response.code === 201) {
 
 ---
 
-## 4. Pre-configured Demo Accounts
+## 4. Account Setup
 
-All demo accounts share the password: `Password123!`
+Create a system admin with the artisan command, then use the API registration endpoints to create other roles:
 
-| Role | Seeded Email | Password | Pre-configured Tenant | Purpose |
-| :--- | :--- | :--- | :--- | :--- |
-| **System Admin** | `admin@courtflex.test` | `Password123!` | Platform wide (`*`) | SaaS platform analytics, tenant onboarding, billing |
-| **Facility Owner**| `owner@courtflex.test` | `Password123!` | `metro-pickleball-club` | Manage venues, courts, staff, and view bookings |
-| **Facility Staff**| `staff@courtflex.test` | `Password123!` | `metro-pickleball-club` | Daily shift reservations, check-ins, payments |
-| **Global Player** | `player@courtflex.test` | `Password123!` | Global player | Book courts, view stats, join clubs & open-play |
-| **Club Organizer**| `organizer@courtflex.test` | `Password123!` | `austin-dinking-masters`| Manage club rosters and tournaments |
+```bash
+php artisan admin:create --name="Admin" --email="admin@courtflex.test" --password="Password123!"
+```
+
+| Role | How to Create | Tenant Scope | Purpose |
+| :--- | :--- | :--- | :--- |
+| **System Admin** | `php artisan admin:create` | Platform wide (`*`) | SaaS platform analytics, tenant onboarding, billing |
+| **Facility Owner** | `POST /api/v1/owners/auth/register` | Creates a new tenant | Manage venues, courts, staff, and view bookings |
+| **Facility Staff** | Invited by an owner | Owner's tenant | Daily shift reservations, check-ins, payments |
+| **Global Player** | `POST /api/v1/players/auth/register` | Global player | Book courts, view stats, join clubs & open-play |
+| **Club Organizer** | Assigned by a club manager | Club tenant | Manage club rosters and tournaments |
 
 ---
 

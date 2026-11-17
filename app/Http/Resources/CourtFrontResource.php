@@ -30,9 +30,12 @@ class CourtFrontResource extends JsonResource
             'contact_email' => $this->contact_email,
             'contact_phone' => $this->contact_phone,
             'contact_address' => $this->contact_address,
-            'website' => $this->website,
-            'facebook' => $this->facebook,
-            'instagram' => $this->instagram,
+            'social_links' => $this->whenLoaded('socialLinks', fn () => $this->socialLinks->map(fn ($link) => [
+                'id' => $link->id,
+                'platform' => $link->platform,
+                'display_name' => $link->display_name,
+                'url' => $link->url,
+            ])),
             'is_open' => $this->is_open,
         ];
     }

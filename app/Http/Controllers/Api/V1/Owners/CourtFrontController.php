@@ -31,7 +31,7 @@ class CourtFrontController extends Controller
     public function show(): JsonResponse
     {
         return $this->successResponse(
-            data: new CourtFrontResource($this->firstOrCreateFront()->load('tenant')),
+            data: new CourtFrontResource($this->firstOrCreateFront()->load(['tenant', 'socialLinks'])),
             message: 'Court front retrieved.'
         );
     }
@@ -43,11 +43,11 @@ class CourtFrontController extends Controller
     {
         $front = $this->firstOrCreateFront();
 
-        $old = $front->only(['tagline', 'description', 'contact_email', 'contact_phone', 'contact_address', 'website', 'facebook', 'instagram', 'is_open']);
+        $old = $front->only(['tagline', 'description', 'contact_email', 'contact_phone', 'contact_address', 'is_open']);
 
         $front->update($request->validated());
 
-        $this->auditLog->log('court_front_updated', $front, $front->tenant_id, $request->user(), $old, $front->only(['tagline', 'description', 'contact_email', 'contact_phone', 'contact_address', 'website', 'facebook', 'instagram', 'is_open']));
+        $this->auditLog->log('court_front_updated', $front, $front->tenant_id, $request->user(), $old, $front->only(['tagline', 'description', 'contact_email', 'contact_phone', 'contact_address', 'is_open']));
 
         return $this->successResponse(
             data: new CourtFrontResource($front->refresh()->load('tenant')),

@@ -7,6 +7,7 @@
     $portals = [
         'api' => ['label' => 'API reference', 'url' => route('api-docs'), 'enabled' => config('api-docs.enabled')],
         'workflows' => ['label' => 'Backend workflows', 'url' => route('workflow-docs'), 'enabled' => config('workflow-docs.enabled')],
+        'data-model' => ['label' => 'Data model', 'url' => route('data-model-docs'), 'enabled' => config('data-model-docs.enabled')],
     ];
 @endphp
 

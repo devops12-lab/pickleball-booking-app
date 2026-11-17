@@ -13,6 +13,8 @@ export default defineConfig({
                 'resources/js/api-docs.js',
                 'resources/css/workflow-docs.css',
                 'resources/js/workflow-docs.js',
+                'resources/css/data-model-docs.css',
+                'resources/js/data-model-docs.js',
             ],
             refresh: true,
             fonts: [

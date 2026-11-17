@@ -11,6 +11,7 @@ use App\Models\CourtOperatingHour;
 use App\Models\Tenant;
 use App\Services\BookingAvailabilityService;
 use App\Services\FileUploadService;
+use App\Services\SubscriptionEntitlementService;
 use App\Support\Compat\Contract;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,8 @@ class CourtController extends Controller
     use ApiResponse, AuthorizesClub;
 
     public function __construct(
-        protected BookingAvailabilityService $availabilityService
+        protected BookingAvailabilityService $availabilityService,
+        protected SubscriptionEntitlementService $entitlements
     ) {}
 
     public function index(Tenant $club): JsonResponse
@@ -44,6 +46,8 @@ class CourtController extends Controller
         if ($denied = $this->denyUnlessMember($club)) {
             return $denied;
         }
+
+        $this->entitlements->checkOrFail($club, 'court');
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],

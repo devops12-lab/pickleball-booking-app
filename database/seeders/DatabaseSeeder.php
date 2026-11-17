@@ -14,12 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class,
             PlatformAdminSeeder::class,
-            DemoDataSeeder::class,
-            DemoPlayerProfileSeeder::class,
-            DemoVenuePinSeeder::class,
-            DemoSubscriptionSeeder::class,
             GeoLocationSeeder::class,
-            DemoShowcaseSeeder::class,
         ]);
     }
 }

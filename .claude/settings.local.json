@@ -7,7 +7,13 @@
       "Bash(node:*)",
       "Bash(ls:*)",
       "Bash(export PATH=\"/c/Users/ec.40021031/.config/herd/bin/php85:$PATH\")",
-      "Bash(vendor/bin/pint --dirty --format agent)"
+      "Bash(vendor/bin/pint --dirty --format agent)",
+      "Bash(python3 -c \"import sys, json; obj = json.load\\(sys.stdin\\); print\\(obj.get\\('output', obj.get\\('message', {}\\).get\\('content', ''\\)\\)\\)\")",
+      "mcp__claude_ai_Claude_Docs__batch",
+      "mcp__claude_ai_Claude_Docs__update",
+      "Bash(xargs grep:*)",
+      "Bash(npm run:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

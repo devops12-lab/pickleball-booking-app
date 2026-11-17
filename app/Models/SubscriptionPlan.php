@@ -15,21 +15,25 @@ class SubscriptionPlan extends Model
         'slug',
         'description',
         'price',
+        'yearly_price',
         'billing_interval',
         'max_courts',
         'max_staff',
         'features',
         'is_active',
+        'sort_order',
     ];
 
     protected function casts(): array
     {
         return [
             'price' => 'decimal:2',
+            'yearly_price' => 'decimal:2',
             'features' => 'array',
             'is_active' => 'boolean',
             'max_courts' => 'integer',
             'max_staff' => 'integer',
+            'sort_order' => 'integer',
         ];
     }
 

@@ -44,6 +44,7 @@ class PlayerAuthController extends Controller
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
             'password' => $validated['password'],
+            'in_game_name' => $validated['in_game_name'] ?? null,
         ]);
 
         $authResponse = $this->authService->buildAuthResponse(

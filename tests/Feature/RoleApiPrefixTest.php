@@ -78,7 +78,7 @@ beforeEach(function (): void {
     ]);
 
     // System Admin
-    $this->admin = User::where('email', 'admin@courtflex.test')->first();
+    $this->admin = createSystemAdmin();
 });
 
 test('public api endpoints are accessible unauthenticated under /api/v1/public/*', function (): void {

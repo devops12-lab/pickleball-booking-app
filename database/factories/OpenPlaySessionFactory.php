@@ -34,7 +34,7 @@ class OpenPlaySessionFactory extends Factory
             'starts_at' => $startsAt,
             'ends_at' => (clone $startsAt)->modify('+2 hours'),
             'max_participants' => fake()->numberBetween(8, 32),
-            'fee' => fake()->optional(0.7)->randomFloat(2, 50, 300),
+            'fee' => fake()->randomFloat(2, 0, 300),
             'status' => 'upcoming',
         ];
     }

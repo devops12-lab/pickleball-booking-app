@@ -2,41 +2,21 @@
 
 namespace Database\Seeders;
 
-use App\Models\PlayerStatistic;
-use App\Models\Role;
 use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
-use App\Models\TenantUser;
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class PlatformAdminSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seed the system tenant and subscription plans.
+     *
+     * Admin accounts are created via `php artisan admin:create`.
      */
     public function run(): void
     {
-        $adminRole = Role::where('name', 'system_admin')->first();
-
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@courtflex.test'],
-            [
-                'name' => 'CourtFlex Administrator',
-                'password' => Hash::make('Password123!'),
-                'account_status' => 'active',
-                'email_verified_at' => now(),
-            ]
-        );
-
-        PlayerStatistic::firstOrCreate(
-            ['user_id' => $admin->id],
-            ['current_rating' => 1500.00]
-        );
-
         // System tenant for platform-wide operations
-        $systemTenant = Tenant::firstOrCreate(
+        Tenant::firstOrCreate(
             ['slug' => 'platform-admin'],
             [
                 'name' => 'CourtFlex Platform System',
@@ -45,22 +25,26 @@ class PlatformAdminSeeder extends Seeder
             ]
         );
 
-        TenantUser::firstOrCreate(
+        // Seed subscription plans
+        SubscriptionPlan::firstOrCreate(
+            ['slug' => 'free'],
             [
-                'tenant_id' => $systemTenant->id,
-                'user_id' => $admin->id,
-            ],
-            [
-                'role_id' => $adminRole->id,
-                'status' => 'active',
+                'name' => 'Free',
+                'description' => 'Get started with basic court management at no cost.',
+                'price' => 0.00,
+                'billing_interval' => 'monthly',
+                'max_courts' => 2,
+                'max_staff' => 1,
+                'features' => ['court_booking', 'basic_reporting'],
+                'is_active' => true,
+                'sort_order' => 1,
             ]
         );
 
-        // Seed initial subscription plans
         SubscriptionPlan::firstOrCreate(
             ['slug' => 'starter'],
             [
-                'name' => 'Starter Facility',
+                'name' => 'Starter',
                 'description' => 'For boutique pickleball venues with up to 4 courts.',
                 'price' => 1499.00,
                 'billing_interval' => 'monthly',
@@ -68,20 +52,37 @@ class PlatformAdminSeeder extends Seeder
                 'max_staff' => 3,
                 'features' => ['court_booking', 'payment_verification', 'basic_reporting'],
                 'is_active' => true,
+                'sort_order' => 2,
             ]
         );
 
         SubscriptionPlan::firstOrCreate(
-            ['slug' => 'pro'],
+            ['slug' => 'professional'],
             [
-                'name' => 'Pro Club & Arena',
-                'description' => 'For high-capacity venues with unlimited courts, tournaments, and open-play.',
-                'price' => 3999.00,
+                'name' => 'Professional',
+                'description' => 'For growing venues with tournaments, open play, and advanced analytics.',
+                'price' => 2999.00,
                 'billing_interval' => 'monthly',
-                'max_courts' => 20,
-                'max_staff' => 15,
-                'features' => ['court_booking', 'payment_verification', 'tournaments', 'open_play', 'club_management', 'analytics'],
+                'max_courts' => 10,
+                'max_staff' => 8,
+                'features' => ['court_booking', 'payment_verification', 'tournaments', 'open_play', 'analytics', 'basic_reporting'],
                 'is_active' => true,
+                'sort_order' => 3,
+            ]
+        );
+
+        SubscriptionPlan::firstOrCreate(
+            ['slug' => 'business'],
+            [
+                'name' => 'Business',
+                'description' => 'For high-capacity venues with unlimited courts, club management, and full platform access.',
+                'price' => 4999.00,
+                'billing_interval' => 'monthly',
+                'max_courts' => 50,
+                'max_staff' => 25,
+                'features' => ['court_booking', 'payment_verification', 'tournaments', 'open_play', 'club_management', 'analytics', 'basic_reporting', 'priority_support'],
+                'is_active' => true,
+                'sort_order' => 4,
             ]
         );
     }

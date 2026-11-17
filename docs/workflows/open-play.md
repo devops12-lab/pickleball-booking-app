@@ -13,7 +13,7 @@ sources:
   - app/Models/OpenPlaySession.php
   - app/Models/OpenPlayParticipant.php
   - database/migrations/2026_11_05_100006_create_open_play_tables.php
-  - database/seeders/DemoDataSeeder.php
+  - database/factories/OpenPlaySessionFactory.php
 ---
 
 # Open play
@@ -30,7 +30,7 @@ Open play sessions are drop-in games on a court with a participant limit, an opt
 
 ## Where sessions come from
 
-**No endpoint creates, edits or cancels sessions.** The only code that creates them is `DemoDataSeeder`. Status: **Partially Implemented**.
+**No endpoint creates, edits or cancels sessions.** Sessions can be created via factories in tests. Status: **Partially Implemented**.
 
 ## Discover sessions
 

@@ -12,8 +12,10 @@ use App\Http\Traits\ApiResponse;
 use App\Models\Court;
 use App\Models\CourtImage;
 use App\Models\Facility;
+use App\Models\Tenant;
 use App\Services\AuditLogService;
 use App\Services\FileUploadService;
+use App\Services\SubscriptionEntitlementService;
 use App\Services\TenantContextService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,7 +29,8 @@ class CourtController extends Controller
     public function __construct(
         protected TenantContextService $tenantContext,
         protected FileUploadService $fileUpload,
-        protected AuditLogService $auditLog
+        protected AuditLogService $auditLog,
+        protected SubscriptionEntitlementService $entitlements
     ) {}
 
     /**
@@ -57,6 +60,9 @@ class CourtController extends Controller
     public function store(StoreCourtRequest $request): JsonResponse
     {
         $tenantId = $this->tenantContext->getTenantId();
+
+        $this->entitlements->checkOrFail(Tenant::findOrFail($tenantId), 'court');
+
         $validated = $request->validated();
 
         $facility = Facility::where('id', $validated['facility_id'])

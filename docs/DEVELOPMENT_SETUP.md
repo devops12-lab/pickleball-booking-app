@@ -67,17 +67,31 @@
    php artisan migrate:fresh --seed
    ```
 
-   The seeder populates:
+   The seeder provisions structural data only:
    - 32 granular permissions
    - 5 primary roles (`system_admin`, `owner`, `staff`, `player`, `club_manager`)
-   - Platform System Admin: `admin@courtflex.test` (password: `Password123!`)
-   - Facility Owner: `owner@courtflex.test` (password: `Password123!`)
-   - Facility Staff: `staff@courtflex.test` (password: `Password123!`)
-   - Global Player: `player@courtflex.test` (password: `Password123!`)
-   - Club Organizer: `organizer@courtflex.test` (password: `Password123!`)
-   - Demo facilities, courts, operating hours, and subscription tiers
+   - `platform-admin` system tenant
+   - Subscription plans (Starter, Pro)
+   - Philippine geographic data (regions, provinces, cities, barangays)
 
-4. **Serve the Application**:
+4. **Create a System Admin**:
+   ```bash
+   php artisan admin:create
+   ```
+
+   The command prompts for name, email and password interactively. For scripted setups:
+   ```bash
+   php artisan admin:create --name="Admin" --email="admin@example.com" --password="YourPassword"
+   ```
+
+5. **(Optional) Seed Demo Accounts**:
+   ```bash
+   php artisan db:seed --class=DemoAccountSeeder
+   ```
+
+   Creates one account per role (admin, owner, staff, player, organizer) with password `Password123!`. Idempotent — safe to run multiple times. See the output table for emails and credentials.
+
+6. **Serve the Application**:
    ```bash
    php artisan serve
    ```

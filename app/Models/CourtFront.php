@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * The public store front ("court front") of a facility tenant. Exactly one
@@ -18,9 +19,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $contact_email
  * @property string|null $contact_phone
  * @property string|null $contact_address
- * @property string|null $website
- * @property string|null $facebook
- * @property string|null $instagram
  * @property bool $is_open
  *
  * @mixin \Eloquent
@@ -43,9 +41,6 @@ class CourtFront extends Model
         'contact_email',
         'contact_phone',
         'contact_address',
-        'website',
-        'facebook',
-        'instagram',
         'is_open',
     ];
 
@@ -67,5 +62,10 @@ class CourtFront extends Model
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function socialLinks(): HasMany
+    {
+        return $this->hasMany(StorefrontSocialLink::class)->orderBy('sort_order');
     }
 }

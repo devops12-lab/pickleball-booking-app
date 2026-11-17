@@ -32,7 +32,17 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
-        $user->update($request->validated());
+        $validated = $request->validated();
+
+        // Separate player profile fields from user fields
+        $inGameName = $validated['in_game_name'] ?? null;
+        unset($validated['in_game_name']);
+
+        $user->update($validated);
+
+        if ($request->has('in_game_name') && $user->playerProfile) {
+            $user->playerProfile->update(['in_game_name' => $inGameName]);
+        }
 
         return $this->successResponse(
             data: new UserResource($user->fresh()),

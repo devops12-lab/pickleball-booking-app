@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\StaffAuthController;
+use App\Http\Controllers\Api\V1\Staff\AdvertisementController as StaffAdController;
 use App\Http\Controllers\Api\V1\Staff\BookingController;
 use App\Http\Controllers\Api\V1\Staff\CheckInController;
 use App\Http\Controllers\Api\V1\Staff\DashboardController;
+use App\Http\Controllers\Api\V1\Staff\GuestBookingController;
 use App\Http\Controllers\Api\V1\Staff\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,4 +45,14 @@ Route::middleware(['auth:sanctum', 'account.active', 'tenant.context', 'tenant.a
     Route::post('/payments/{payment}/verify', [PaymentController::class, 'verify'])->name('payments.verify');
 
     Route::post('/bookings/{booking}/check-in', [CheckInController::class, 'checkIn'])->name('bookings.check_in');
+
+    // Guest bookings (walk-in)
+    Route::prefix('guest-bookings')->name('guest_bookings.')->group(function (): void {
+        Route::get('/', [GuestBookingController::class, 'index'])->name('index');
+        Route::post('/', [GuestBookingController::class, 'store'])->middleware('throttle:resource-creation')->name('store');
+        Route::get('/{booking}', [GuestBookingController::class, 'show'])->name('show');
+        Route::post('/{booking}/cancel', [GuestBookingController::class, 'cancel'])->name('cancel');
+    });
+
+    Route::get('/advertisements', [StaffAdController::class, 'index'])->name('advertisements.index');
 });

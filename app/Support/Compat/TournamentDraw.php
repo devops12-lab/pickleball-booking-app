@@ -322,8 +322,30 @@ class TournamentDraw
                 ->max('round_number');
 
             if ((int) $slot->round_number >= $rounds) {
+                $loserId = (int) $slot->participant1_id === $winnerId
+                    ? $slot->participant2_id
+                    : $slot->participant1_id;
+
+                $thirdPlaceId = null;
+
+                if ($rounds >= 2) {
+                    $thirdPlaceId = TournamentMatch::query()
+                        ->where('tournament_id', $tournament->id)
+                        ->where('stage', 'knockout')
+                        ->where('round_number', $rounds - 1)
+                        ->whereNotNull('winner_id')
+                        ->get()
+                        ->map(fn (TournamentMatch $m): ?int => (int) $m->winner_id === (int) $m->participant1_id
+                            ? $m->participant2_id
+                            : $m->participant1_id)
+                        ->filter()
+                        ->first();
+                }
+
                 $tournament->update([
                     'champion_participant_id' => $winnerId,
+                    'runner_up_participant_id' => $loserId,
+                    'third_place_participant_id' => $thirdPlaceId,
                     'status' => 'completed',
                 ]);
             } else {
@@ -388,11 +410,16 @@ class TournamentDraw
         $tables = CompetitionView::standings($tournament);
 
         if ($stage === 'round_robin') {
-            $champion = $tables[0]['rows'][0]['entry']['id'] ?? null;
+            $rows = $tables[0]['rows'] ?? [];
+            $champion = $rows[0]['entry']['id'] ?? null;
+            $runnerUp = $rows[1]['entry']['id'] ?? null;
+            $thirdPlace = $rows[2]['entry']['id'] ?? null;
 
             if ($champion !== null) {
                 $tournament->update([
                     'champion_participant_id' => (int) $champion,
+                    'runner_up_participant_id' => $runnerUp !== null ? (int) $runnerUp : null,
+                    'third_place_participant_id' => $thirdPlace !== null ? (int) $thirdPlace : null,
                     'status' => 'completed',
                 ]);
             }

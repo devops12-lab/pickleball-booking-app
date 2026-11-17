@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApiDocumentationController;
+use App\Http\Controllers\DataModelDocumentationController;
 use App\Http\Controllers\WorkflowDocumentationController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +12,10 @@ Route::get('/', function () {
 Route::get('/'.config('api-docs.path', 'docs-api-endpoints'), ApiDocumentationController::class)
     ->middleware(config('api-docs.middleware', []))
     ->name('api-docs');
+
+Route::get('/'.config('data-model-docs.path', 'docs-data-model'), DataModelDocumentationController::class)
+    ->middleware(config('data-model-docs.middleware', []))
+    ->name('data-model-docs');
 
 Route::prefix(config('workflow-docs.path', 'docs-work-flow'))
     ->middleware(config('workflow-docs.middleware', []))

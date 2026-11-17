@@ -21,6 +21,7 @@ class Tournament extends Model
         'name',
         'slug',
         'description',
+        'banner_image',
         'format',
         'match_type',
         'court_ids',
@@ -33,6 +34,8 @@ class Tournament extends Model
         'capacity',
         'pools',
         'champion_participant_id',
+        'runner_up_participant_id',
+        'third_place_participant_id',
         'cancel_reason',
         'status',
     ];
@@ -50,6 +53,8 @@ class Tournament extends Model
             'capacity' => 'integer',
             'pools' => 'integer',
             'champion_participant_id' => 'integer',
+            'runner_up_participant_id' => 'integer',
+            'third_place_participant_id' => 'integer',
         ];
     }
 
@@ -66,6 +71,16 @@ class Tournament extends Model
     public function champion(): BelongsTo
     {
         return $this->belongsTo(TournamentParticipant::class, 'champion_participant_id');
+    }
+
+    public function runnerUp(): BelongsTo
+    {
+        return $this->belongsTo(TournamentParticipant::class, 'runner_up_participant_id');
+    }
+
+    public function thirdPlace(): BelongsTo
+    {
+        return $this->belongsTo(TournamentParticipant::class, 'third_place_participant_id');
     }
 
     public function categories(): HasMany

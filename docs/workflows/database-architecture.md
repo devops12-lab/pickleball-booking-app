@@ -64,6 +64,7 @@ erDiagram
     TOURNAMENTS ||--o{ TOURNAMENT_MATCHES : "matches"
     TOURNAMENTS ||--o{ TOURNAMENT_BRACKETS : "brackets"
     TOURNAMENT_PARTICIPANTS ||--o{ TOURNAMENT_MATCHES : "plays / wins"
+    USERS ||--o| PLAYER_PROFILES : "profile"
     USERS ||--|| PLAYER_STATISTICS : "stats"
     USERS ||--o{ PLAYER_RANKINGS : "ranked"
     USERS ||--o{ AUDIT_LOGS : "acted"
@@ -84,6 +85,7 @@ erDiagram
 | Clubs | `clubs`, `club_members`, `club_invitations` | `clubs.slug` globally unique; one membership per (`club_id`, `user_id`) |
 | Open play | `open_play_sessions`, `open_play_participants` | one registration per (session, user) |
 | Tournaments | `tournaments`, `tournament_categories`, `tournament_participants`, `tournament_matches`, `tournament_brackets` | tournament unique on (`tenant_id`, `slug`) |
+| Player profiles | `player_profiles` | one profile per user; `in_game_name` unique (nullable) |
 | Rankings | `player_statistics`, `player_rankings`, `match_results` | one statistics row per user |
 | Audit | `audit_logs` | indexed by action, entity and (`tenant_id`, `created_at`) |
 | Framework | `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs` | Used by the database cache, session and queue drivers |

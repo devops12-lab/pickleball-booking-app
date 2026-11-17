@@ -20,10 +20,12 @@ class StoreSubscriptionPlanRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
+            'yearly_price' => ['nullable', 'numeric', 'min:0'],
             'billing_interval' => ['required', 'string', 'in:monthly,yearly'],
             'max_courts' => ['required', 'integer', 'min:1'],
             'max_staff' => ['required', 'integer', 'min:1'],
             'features' => ['nullable', 'array'],
+            'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];
     }
 }

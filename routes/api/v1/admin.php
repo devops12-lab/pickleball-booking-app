@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminSettingsController;
+use App\Http\Controllers\Api\V1\Admin\AdvertisementController;
 use App\Http\Controllers\Api\V1\Admin\AnalyticsController;
+use App\Http\Controllers\Api\V1\Admin\CeoAnalyticsController;
+use App\Http\Controllers\Api\V1\Admin\ClubController as AdminClubController;
 use App\Http\Controllers\Api\V1\Admin\DatabaseBackupController;
 use App\Http\Controllers\Api\V1\Admin\DatabaseBackupLogController;
 use App\Http\Controllers\Api\V1\Admin\DatabaseBackupScheduleController;
@@ -9,11 +13,11 @@ use App\Http\Controllers\Api\V1\Admin\TenantController;
 use App\Http\Controllers\Api\V1\Auth\AdminAuthController;
 use App\Http\Controllers\Api\V1\Compat\AdminBillingController as CompatAdminBillingController;
 use App\Http\Controllers\Api\V1\Compat\AdminDashboardController as CompatAdminDashboardController;
+use App\Http\Controllers\Api\V1\Compat\AdminEmailSettingsController;
 use App\Http\Controllers\Api\V1\Compat\AdminOrgController as CompatAdminOrgController;
 use App\Http\Controllers\Api\V1\Compat\AdminRatingController;
 use App\Http\Controllers\Api\V1\Compat\AdminUserController as CompatAdminUserController;
 use App\Http\Controllers\Api\V1\Compat\CompetitionAdminController;
-use App\Http\Controllers\Api\V1\Compat\AdminEmailSettingsController;
 use App\Http\Controllers\Api\V1\Compat\PlatformController;
 use Illuminate\Support\Facades\Route;
 
@@ -76,6 +80,11 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:system-admin', 'throt
     Route::post('/invoices/{invoice}/void', [CompatAdminBillingController::class, 'voidInvoice'])->name('billing.invoices.void');
     Route::get('/revenue', [CompatAdminBillingController::class, 'revenue'])->name('billing.revenue');
 
+    // Admin Club CRUD (list and show handled by CompatAdminOrgController above)
+    Route::post('/clubs', [AdminClubController::class, 'store'])->middleware('throttle:resource-creation')->name('clubs.store');
+    Route::patch('/clubs/{club}/admin', [AdminClubController::class, 'update'])->name('clubs.update');
+    Route::delete('/clubs/{club}', [AdminClubController::class, 'destroy'])->name('clubs.destroy');
+
     Route::get('/users', [CompatAdminUserController::class, 'index'])->name('users.index');
     Route::get('/users/{user}', [CompatAdminUserController::class, 'show'])->name('users.show');
     Route::patch('/users/{user}/status', [CompatAdminUserController::class, 'updateStatus'])->name('users.status');
@@ -88,8 +97,47 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:system-admin', 'throt
 
     Route::get('/subscription-plans', [SubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::post('/subscription-plans', [SubscriptionController::class, 'storePlan'])->middleware('throttle:resource-creation')->name('subscriptions.plans.store');
+    Route::get('/subscription-plans/{code}', [SubscriptionController::class, 'showPlan'])->name('subscriptions.plans.show');
+    Route::patch('/subscription-plans/{code}', [SubscriptionController::class, 'updatePlan'])->name('subscriptions.plans.update');
+    Route::delete('/subscription-plans/{code}', [SubscriptionController::class, 'destroyPlan'])->name('subscriptions.plans.destroy');
 
     Route::get('/analytics', [AnalyticsController::class, 'analytics'])->name('analytics');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CEO Analytics Dashboard (/api/v1/admin/analytics/*)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('analytics')->name('analytics.')->group(function (): void {
+        Route::get('/overview', [CeoAnalyticsController::class, 'overview'])->name('overview');
+        Route::get('/users', [CeoAnalyticsController::class, 'users'])->name('users');
+        Route::get('/facilities', [CeoAnalyticsController::class, 'facilities'])->name('facilities');
+        Route::get('/bookings', [CeoAnalyticsController::class, 'bookings'])->name('bookings');
+        Route::get('/revenue', [CeoAnalyticsController::class, 'revenue'])->name('revenue');
+        Route::get('/subscriptions', [CeoAnalyticsController::class, 'subscriptions'])->name('subscriptions');
+        Route::get('/clubs', [CeoAnalyticsController::class, 'clubs'])->name('clubs');
+        Route::get('/tournaments', [CeoAnalyticsController::class, 'tournaments'])->name('tournaments');
+        Route::get('/advertisements', [CeoAnalyticsController::class, 'advertisements'])->name('advertisements');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Advertisements (/api/v1/admin/advertisements)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('advertisements')->name('advertisements.')->group(function (): void {
+        Route::get('/', [AdvertisementController::class, 'index'])->name('index');
+        Route::post('/', [AdvertisementController::class, 'store'])->middleware('throttle:resource-creation')->name('store');
+        Route::get('/requests', [AdvertisementController::class, 'requests'])->name('requests.index');
+        Route::get('/requests/{advertisementRequest}', [AdvertisementController::class, 'showRequest'])->whereNumber('advertisementRequest')->name('requests.show');
+        Route::patch('/requests/{advertisementRequest}/review', [AdvertisementController::class, 'reviewRequest'])->whereNumber('advertisementRequest')->name('requests.review');
+        Route::get('/{advertisement}', [AdvertisementController::class, 'show'])->whereNumber('advertisement')->name('show');
+        Route::patch('/{advertisement}', [AdvertisementController::class, 'update'])->whereNumber('advertisement')->name('update');
+        Route::delete('/{advertisement}', [AdvertisementController::class, 'destroy'])->whereNumber('advertisement')->name('destroy');
+        Route::post('/{advertisement}/publish', [AdvertisementController::class, 'publish'])->whereNumber('advertisement')->name('publish');
+        Route::post('/{advertisement}/pause', [AdvertisementController::class, 'pause'])->whereNumber('advertisement')->name('pause');
+        Route::patch('/{advertisement}/status', [AdvertisementController::class, 'updateStatus'])->whereNumber('advertisement')->name('status');
+    });
 
     // Group 19: the audit log, announcements and platform settings.
     Route::get('/audit-logs', [PlatformController::class, 'auditLogs'])->name('audit_logs');
@@ -102,6 +150,20 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:system-admin', 'throt
     Route::get('/email-settings', [AdminEmailSettingsController::class, 'show'])->name('email_settings.show');
     Route::put('/email-settings', [AdminEmailSettingsController::class, 'update'])->name('email_settings.update');
     Route::post('/email-settings/test', [AdminEmailSettingsController::class, 'sendTest'])->name('email_settings.test');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Configuration (/api/v1/admin/settings/app, /settings/socials)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('settings')->name('app_settings.')->group(function (): void {
+        Route::get('/app', [AdminSettingsController::class, 'getAppSettings'])->name('app');
+        Route::put('/app', [AdminSettingsController::class, 'updateAppSettings'])->name('app.update');
+        Route::get('/socials', [AdminSettingsController::class, 'getSocials'])->name('socials');
+        Route::post('/socials', [AdminSettingsController::class, 'addSocial'])->name('socials.store');
+        Route::put('/socials/{index}', [AdminSettingsController::class, 'updateSocial'])->whereNumber('index')->name('socials.update');
+        Route::delete('/socials/{index}', [AdminSettingsController::class, 'removeSocial'])->whereNumber('index')->name('socials.destroy');
+    });
 
     /*
     |--------------------------------------------------------------------------

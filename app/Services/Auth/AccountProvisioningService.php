@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Models\ClubInvitation;
 use App\Models\ClubMember;
+use App\Models\PlayerProfile;
 use App\Models\PlayerStatistic;
 use App\Models\Role;
 use App\Models\StaffInvitation;
@@ -105,6 +106,12 @@ class AccountProvisioningService
                 PlayerStatistic::create([
                     'user_id' => $user->id,
                     'current_rating' => 1200.00,
+                ]);
+
+                PlayerProfile::create([
+                    'user_id' => $user->id,
+                    'display_name' => $userData['name'],
+                    'in_game_name' => $userData['in_game_name'] ?? null,
                 ]);
             }
 

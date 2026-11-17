@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdvertisementTrackingController;
+use App\Http\Controllers\Api\V1\FormDraftController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -60,4 +62,21 @@ Route::prefix('v1')->group(function (): void {
     Route::prefix('organizers')
         ->name('organizers.')
         ->group(base_path('routes/api/v1/organizers.php'));
+
+    // ----------------------------------------------------------------
+    // Shared Authenticated API (any role)
+    // ----------------------------------------------------------------
+    Route::middleware(['auth:sanctum', 'account.active', 'throttle:api'])->group(function (): void {
+        Route::prefix('form-drafts')->name('form_drafts.')->group(function (): void {
+            Route::get('/', [FormDraftController::class, 'index'])->name('index');
+            Route::post('/', [FormDraftController::class, 'store'])->name('store');
+            Route::get('/{formDraft}', [FormDraftController::class, 'show'])->name('show');
+            Route::patch('/{formDraft}', [FormDraftController::class, 'update'])->name('update');
+            Route::delete('/{formDraft}', [FormDraftController::class, 'destroy'])->name('destroy');
+        });
+
+        // Advertisement tracking (any authenticated user)
+        Route::post('/advertisements/{advertisement}/impression', [AdvertisementTrackingController::class, 'impression'])->name('advertisements.impression');
+        Route::post('/advertisements/{advertisement}/click', [AdvertisementTrackingController::class, 'click'])->name('advertisements.click');
+    });
 });

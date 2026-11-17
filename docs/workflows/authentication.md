@@ -75,15 +75,16 @@ sequenceDiagram
 
 ### Player
 
-`POST /players/auth/register` validates with `RegisterRequest` (unique email, password of at least 8 characters with letters and numbers, confirmed), then `AccountProvisioningService::provisionPlayer()` runs in a transaction:
+`POST /players/auth/register` validates with `RegisterRequest` (unique email, password of at least 8 characters with letters and numbers, confirmed). The `name` field must be a full name containing at least 2 words (first name and surname), enforced by the `App\Rules\FullName` validation rule. An optional `in_game_name` (nullable, unique) can also be provided. Then `AccountProvisioningService::provisionPlayer()` runs in a transaction:
 
 1. Create the `users` row with status `active`.
-2. Create a `player_statistics` row with a starting rating of 1200.
-3. Return a token response with status 201.
+2. Create a `player_profiles` row with `display_name` and `in_game_name`.
+3. Create a `player_statistics` row with a starting rating of 1200.
+4. Return a token response with status 201.
 
 ### Facility owner
 
-`POST /owners/auth/register` uses `OwnerRegisterRequest` and `provisionOwner()`. In one transaction it:
+`POST /owners/auth/register` uses `OwnerRegisterRequest` and `provisionOwner()`. The `name` field must be a full name (at least 2 words), enforced by `App\Rules\FullName`. In one transaction it:
 
 1. Creates the user (or reuses an existing one with the same email) and their `player_statistics` row.
 2. Creates a `tenants` row from `business_name`. If the slug is taken, a random suffix is added.
@@ -93,7 +94,7 @@ The response includes a token with the new tenant as `context`.
 
 ### Staff (invitation)
 
-`POST /staff/auth/accept-invitation` calls `acceptStaffInvitation()`. It finds a `staff_invitations` row by token that is `pending` and not expired, creates the user if needed, adds the `tenant_users` membership with the invited role, and marks the invitation `accepted`.
+`POST /staff/auth/accept-invitation` calls `acceptStaffInvitation()`. The `name` field must be a full name (at least 2 words), enforced by `App\Rules\FullName` in `StaffAcceptInvitationRequest`. It finds a `staff_invitations` row by token that is `pending` and not expired, creates the user if needed, adds the `tenant_users` membership with the invited role, and marks the invitation `accepted`.
 
 **Gap:** no route creates invitations. `AccountProvisioningService::createStaffInvitation()` exists but nothing calls it. Owners can only add existing users directly with `POST /owners/staff`.
 

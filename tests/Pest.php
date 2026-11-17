@@ -1,9 +1,14 @@
 <?php
 
 use App\Models\DatabaseBackup;
+use App\Models\PlayerStatistic;
+use App\Models\Role;
+use App\Models\Tenant;
+use App\Models\TenantUser;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 /*
@@ -99,9 +104,49 @@ function useTemporaryFileDatabase(): string
 }
 
 /**
- * Resolve the seeded system administrator.
+ * Create a system administrator with platform-admin tenant link.
+ *
+ * Requires RolesAndPermissionsSeeder and PlatformAdminSeeder to be run first.
+ */
+function createSystemAdmin(string $email = 'admin@courtflex.test', string $name = 'CourtFlex Administrator'): User
+{
+    $admin = User::firstOrCreate(
+        ['email' => $email],
+        [
+            'name' => $name,
+            'password' => Hash::make('Password123!'),
+            'account_status' => 'active',
+            'email_verified_at' => now(),
+        ]
+    );
+
+    PlayerStatistic::firstOrCreate(
+        ['user_id' => $admin->id],
+        ['current_rating' => 1500.00]
+    );
+
+    $adminRole = Role::where('name', 'system_admin')->firstOrFail();
+    $systemTenant = Tenant::where('slug', 'platform-admin')->firstOrFail();
+
+    TenantUser::firstOrCreate(
+        [
+            'tenant_id' => $systemTenant->id,
+            'user_id' => $admin->id,
+        ],
+        [
+            'role_id' => $adminRole->id,
+            'status' => 'active',
+        ]
+    );
+
+    return $admin;
+}
+
+/**
+ * Resolve or create the system administrator for database backup tests.
  */
 function databaseBackupAdmin(): User
 {
-    return User::query()->where('email', 'admin@courtflex.test')->firstOrFail();
+    return User::query()->where('email', 'admin@courtflex.test')->first()
+        ?? createSystemAdmin();
 }

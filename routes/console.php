@@ -27,3 +27,23 @@ Schedule::command('database:backup-cleanup')
     ->dailyAt('04:30')
     ->withoutOverlapping(30)
     ->onOneServer();
+
+/*
+|--------------------------------------------------------------------------
+| Subscription Lifecycle
+|--------------------------------------------------------------------------
+*/
+Schedule::command('subscriptions:generate-renewals')
+    ->dailyAt('06:00')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+Schedule::command('subscriptions:process-downgrades')
+    ->dailyAt('06:15')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+Schedule::command('subscriptions:process-expiration')
+    ->dailyAt('06:30')
+    ->withoutOverlapping()
+    ->onOneServer();

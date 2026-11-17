@@ -1,0 +1,424 @@
+/*
+ * CourtFlex Data Model documentation.
+ * Builds on api-docs.css (calm-ui tokens, header, sidebar, palette, toast)
+ * and only adds what database schema presentation needs.
+ */
+
+/* Nav: mono-spaced table links ---------------------------------------- */
+
+.nav-table-link {
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.nav-items {
+    padding-bottom: var(--space-2);
+}
+
+/* Domain grid --------------------------------------------------------- */
+
+.domain-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+}
+
+.domain-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--ink);
+    transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.domain-card:hover {
+    border-color: var(--accent-ink);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+}
+
+.domain-card h3 {
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 600;
+    margin: 0 0 var(--space-1);
+}
+
+.domain-card-count {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--ink-subtle);
+    margin-bottom: var(--space-2);
+}
+
+.domain-card-tables {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+.domain-card-tables li {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 16px;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+    color: var(--ink-muted);
+}
+
+@media (min-width: 640px) {
+    .domain-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .domain-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* Table schema card --------------------------------------------------- */
+
+.table-card {
+    margin-bottom: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.table-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.table-card-header h3 {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.table-card-link {
+    margin-left: auto;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--accent-ink);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.table-card-link:hover {
+    text-decoration: underline;
+}
+
+/* Column table -------------------------------------------------------- */
+
+.col-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.col-table th {
+    padding: var(--space-2) var(--space-4);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-subtle);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.col-table td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--ink-muted);
+}
+
+.col-table tr:last-child td {
+    border-bottom: none;
+}
+
+.col-table tr:hover td {
+    background: var(--surface);
+}
+
+.col-name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+/* Description column -------------------------------------------------- */
+
+.col-desc {
+    color: var(--ink-muted);
+    font-size: 13px;
+    line-height: 18px;
+}
+
+/* Type badges --------------------------------------------------------- */
+
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.type-badge--pk {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+[data-theme="dark"] .type-badge--pk {
+    background: #1e3a5f;
+    color: #93c5fd;
+}
+
+.type-badge--fk {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+[data-theme="dark"] .type-badge--fk {
+    background: #422006;
+    color: #fcd34d;
+}
+
+/* Modifier pills ------------------------------------------------------ */
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 5px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    line-height: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-left: var(--space-1);
+    white-space: nowrap;
+}
+
+.pill--nullable {
+    background: var(--surface-muted);
+    color: var(--ink-subtle);
+}
+
+.pill--unique {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+[data-theme="dark"] .pill--unique {
+    background: #2e1065;
+    color: #c4b5fd;
+}
+
+.pill--index {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+[data-theme="dark"] .pill--index {
+    background: #0c4a6e;
+    color: #7dd3fc;
+}
+
+.pill--pk {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+[data-theme="dark"] .pill--pk {
+    background: #1e3a5f;
+    color: #93c5fd;
+}
+
+/* Foreign keys section ------------------------------------------------ */
+
+.fk-section {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+.fk-section h4 {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    color: var(--ink-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 var(--space-2);
+}
+
+.fk-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.fk-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-size: 14px;
+    line-height: 20px;
+    padding: var(--space-1) 0;
+}
+
+.fk-col {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+.fk-arrow {
+    color: var(--ink-subtle);
+}
+
+.fk-ref {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent-ink);
+}
+
+.fk-action {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--ink-subtle);
+}
+
+/* Composite indexes section ------------------------------------------- */
+
+.idx-section {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+.idx-section h4 {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    color: var(--ink-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 var(--space-2);
+}
+
+.idx-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.idx-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-size: 14px;
+    line-height: 20px;
+    padding: var(--space-1) 0;
+}
+
+.idx-cols {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+.idx-type {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--ink-subtle);
+}
+
+.idx-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-subtle);
+}
+
+/* Stacked column table on phones ------------------------------------- */
+
+@media (max-width: 639px) {
+    .col-table-wrap {
+        border: 0;
+        border-radius: 0;
+        overflow: visible;
+    }
+
+    .col-table,
+    .col-table tbody,
+    .col-table tr,
+    .col-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .col-table thead {
+        display: none;
+    }
+
+    .col-table tr {
+        margin-bottom: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+    }
+
+    .col-table td,
+    .col-table tr:last-child td {
+        padding: var(--space-1) 0;
+        border: 0;
+    }
+
+    .col-table td[data-label]:not(:first-child)::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 2px;
+        font-size: 12px;
+        line-height: 16px;
+        font-weight: 500;
+        color: var(--ink-subtle);
+    }
+
+    .brand-title {
+        display: none;
+    }
+}

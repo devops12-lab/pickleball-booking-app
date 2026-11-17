@@ -69,8 +69,6 @@ test('an owner can manage the court front details and contact information', func
             'contact_email' => 'hello@metro.test',
             'contact_phone' => '+63 917 555 0100',
             'contact_address' => '123 Court Street, Manila',
-            'website' => 'https://metropickleball.test',
-            'facebook' => 'https://facebook.com/metropickleball',
             'is_open' => false,
         ])
         ->assertOk()
@@ -86,10 +84,9 @@ test('court front validation rejects bad contact details', function (): void {
         ->withHeader('X-Tenant-ID', (string) $this->tenant->id)
         ->patchJson('/api/v1/owners/court-front', [
             'contact_email' => 'not-an-email',
-            'website' => 'not-a-url',
         ])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['contact_email', 'website']);
+        ->assertJsonValidationErrors(['contact_email']);
 });
 
 test('the owner can upload a logo and a cover image', function (): void {

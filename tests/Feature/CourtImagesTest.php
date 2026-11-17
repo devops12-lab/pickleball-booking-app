@@ -4,7 +4,9 @@ use App\Models\Court;
 use App\Models\CourtImage;
 use App\Models\Facility;
 use App\Models\Role;
+use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
+use App\Models\TenantSubscription;
 use App\Models\TenantUser;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -41,6 +43,23 @@ beforeEach(function (): void {
         'user_id' => $this->owner->id,
         'role_id' => $this->ownerRole->id,
         'status' => 'active',
+    ]);
+
+    $plan = SubscriptionPlan::create([
+        'name' => 'Test Plan',
+        'slug' => 'test-plan',
+        'price' => 1499.00,
+        'billing_interval' => 'monthly',
+        'max_courts' => 10,
+        'max_staff' => 5,
+        'features' => ['court_booking'],
+        'is_active' => true,
+    ]);
+    TenantSubscription::create([
+        'tenant_id' => $this->tenant->id,
+        'subscription_plan_id' => $plan->id,
+        'status' => 'active',
+        'starts_at' => now()->subMonth(),
     ]);
 
     $this->facility = Facility::create([

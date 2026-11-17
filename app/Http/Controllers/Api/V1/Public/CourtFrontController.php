@@ -19,7 +19,7 @@ class CourtFrontController extends Controller
     public function show(Tenant $tenant): JsonResponse
     {
         $front = CourtFront::query()
-            ->with('tenant')
+            ->with(['tenant', 'socialLinks' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
             ->where('tenant_id', $tenant->id)
             ->first();
 

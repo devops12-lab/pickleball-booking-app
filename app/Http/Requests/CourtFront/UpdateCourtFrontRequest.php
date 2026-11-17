@@ -22,9 +22,6 @@ class UpdateCourtFrontRequest extends FormRequest
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'contact_address' => ['nullable', 'string', 'max:255'],
-            'website' => ['nullable', 'url', 'max:255'],
-            'facebook' => ['nullable', 'url', 'max:255'],
-            'instagram' => ['nullable', 'url', 'max:255'],
             'is_open' => ['sometimes', 'boolean'],
         ];
     }

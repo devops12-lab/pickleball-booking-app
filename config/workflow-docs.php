@@ -83,6 +83,11 @@ return [
     | conflicts found when the file was compared with the source code.
     */
     'documents' => [
+        'DEPLOYMENT_PLAN.md' => [
+            'category' => 'System architecture',
+            'status' => 'Implemented',
+            'order' => 50,
+        ],
         'DEVELOPMENT_SETUP.md' => [
             'category' => 'Getting started',
             'status' => 'Needs Verification',
@@ -125,7 +130,7 @@ return [
             'notes' => [
                 'Original plan. It lists a notifications table and RequirePermission enforcement; neither exists in the current routes or migrations.',
                 'Mentions a users.google_id column. Google identities are stored in user_auth_providers.',
-                'Names a CourtFlexFoundationSeeder, which does not exist. Demo data comes from DemoDataSeeder.',
+                'Names a CourtFlexFoundationSeeder, which does not exist. Structural data comes from PlatformAdminSeeder and RolesAndPermissionsSeeder.',
             ],
         ],
         'MULTI_TENANCY.md' => [

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\PlayerAuthController;
+use App\Http\Controllers\Api\V1\Players\AdvertisementController as PlayerAdController;
 use App\Http\Controllers\Api\V1\Players\BookingController;
 use App\Http\Controllers\Api\V1\Players\ClubController;
 use App\Http\Controllers\Api\V1\Players\DashboardController;
@@ -51,7 +52,9 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:player', 'throttle:ap
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
 
     Route::get('/clubs', [ClubController::class, 'index'])->name('clubs.index');
+    Route::get('/clubs/available', [ClubController::class, 'available'])->name('clubs.available');
     Route::post('/clubs/{club}/join', [ClubController::class, 'join'])->middleware('throttle:resource-creation')->name('clubs.join');
+    Route::delete('/clubs/{club}/leave', [ClubController::class, 'leave'])->name('clubs.leave');
 
     Route::get('/open-play', [OpenPlayController::class, 'index'])->name('open_play.index');
     Route::post('/open-play/{session}/join', [OpenPlayController::class, 'join'])->middleware('throttle:resource-creation')->name('open_play.join');
@@ -68,4 +71,6 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:player', 'throttle:ap
     Route::get('/tenants/{tenant}/payment-methods', [PaymentController::class, 'tenantMethods'])
         ->whereNumber('tenant')
         ->name('payments.tenant_methods');
+
+    Route::get('/advertisements', [PlayerAdController::class, 'index'])->name('advertisements.index');
 });

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\OrganizerAuthController;
+use App\Http\Controllers\Api\V1\Organizers\AdvertisementController as OrganizerAdController;
+use App\Http\Controllers\Api\V1\Organizers\AdvertisementRequestController;
 use App\Http\Controllers\Api\V1\Organizers\ClubController;
 use App\Http\Controllers\Api\V1\Organizers\DashboardController;
 use App\Http\Controllers\Api\V1\Organizers\MatchResultController;
@@ -52,4 +54,17 @@ Route::middleware(['auth:sanctum', 'account.active', 'role:club_manager,owner,sy
     Route::post('/tournaments/{tournament}/matches/{match}/results', [MatchResultController::class, 'submitScore'])
         ->scopeBindings()
         ->name('tournaments.matches.results');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Advertisement Requests (/api/v1/organizers/advertisement-requests)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('advertisement-requests')->name('advertisement_requests.')->group(function (): void {
+        Route::get('/', [AdvertisementRequestController::class, 'index'])->name('index');
+        Route::post('/', [AdvertisementRequestController::class, 'store'])->middleware('throttle:resource-creation')->name('store');
+        Route::get('/{advertisementRequest}', [AdvertisementRequestController::class, 'show'])->whereNumber('advertisementRequest')->name('show');
+    });
+
+    Route::get('/advertisements', [OrganizerAdController::class, 'index'])->name('advertisements.index');
 });

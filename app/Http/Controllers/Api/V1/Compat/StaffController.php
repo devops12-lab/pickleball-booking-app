@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\TenantUser;
 use App\Models\User;
+use App\Services\SubscriptionEntitlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -21,6 +22,10 @@ use Symfony\Component\HttpFoundation\Response;
 class StaffController extends Controller
 {
     use ApiResponse, AuthorizesClub;
+
+    public function __construct(
+        protected SubscriptionEntitlementService $entitlements
+    ) {}
 
     /** SPA role key => backend role names, in order of preference. */
     private const ROLE_CANDIDATES = [
@@ -49,6 +54,8 @@ class StaffController extends Controller
         if ($denied = $this->denyUnlessMember($club)) {
             return $denied;
         }
+
+        $this->entitlements->checkOrFail($club, 'staff');
 
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255'],

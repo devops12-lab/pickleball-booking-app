@@ -1,15 +1,19 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Public\AppConfigController;
 use App\Http\Controllers\Api\V1\Public\ClubController;
 use App\Http\Controllers\Api\V1\Public\CourtController;
 use App\Http\Controllers\Api\V1\Public\CourtFrontController;
 use App\Http\Controllers\Api\V1\Public\FacilityController;
+use App\Http\Controllers\Api\V1\Public\GuestBookingController;
 use App\Http\Controllers\Api\V1\Public\OpenPlayController;
 use App\Http\Controllers\Api\V1\Public\RankingController;
 use App\Http\Controllers\Api\V1\Public\TournamentController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:public-api')->group(function (): void {
+    Route::get('/app-config', AppConfigController::class)->name('app_config');
+
     Route::get('/facilities', [FacilityController::class, 'index'])->name('facilities.index');
     Route::get('/facilities/{facility}', [FacilityController::class, 'show'])->name('facilities.show');
 
@@ -27,9 +31,19 @@ Route::middleware('throttle:public-api')->group(function (): void {
 
     Route::get('/open-play', [OpenPlayController::class, 'index'])->name('open_play.index');
     Route::get('/open-play/{session}', [OpenPlayController::class, 'show'])->name('open_play.show');
+    Route::get('/open-play/{session}/results', [OpenPlayController::class, 'results'])->name('open_play.results');
 
     Route::get('/tournaments', [TournamentController::class, 'index'])->name('tournaments.index');
     Route::get('/tournaments/{tournament}', [TournamentController::class, 'show'])->name('tournaments.show');
+    Route::get('/tournaments/{tournament}/results', [TournamentController::class, 'results'])->name('tournaments.results');
 
     Route::get('/rankings', [RankingController::class, 'index'])->name('rankings.index');
+
+    // Public guest bookings (unauthenticated)
+    Route::prefix('guest-bookings')->name('guest_bookings.')->group(function (): void {
+        Route::post('/code', [GuestBookingController::class, 'requestCode'])->middleware('throttle:email-verification')->name('code');
+        Route::post('/', [GuestBookingController::class, 'store'])->middleware('throttle:resource-creation')->name('store');
+        Route::post('/find', [GuestBookingController::class, 'find'])->name('find');
+        Route::post('/cancel', [GuestBookingController::class, 'cancel'])->name('cancel');
+    });
 });

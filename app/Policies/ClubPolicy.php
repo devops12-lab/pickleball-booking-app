@@ -35,7 +35,11 @@ class ClubPolicy
 
     public function create(User $user): bool
     {
-        return $user->isActive();
+        if (! $user->isActive()) {
+            return false;
+        }
+
+        return $user->isSystemAdmin() || $user->hasRole('club_manager');
     }
 
     public function update(User $user, Club $club): bool

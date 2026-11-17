@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int|null $club_id
+ */
 class TournamentParticipant extends Model
 {
     use HasFactory;
@@ -14,6 +17,7 @@ class TournamentParticipant extends Model
         'tournament_id',
         'tournament_category_id',
         'user_id',
+        'club_id',
         'partner_id',
         'team_name',
         'payment_id',
@@ -48,6 +52,11 @@ class TournamentParticipant extends Model
     public function partner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'partner_id');
+    }
+
+    public function club(): BelongsTo
+    {
+        return $this->belongsTo(Club::class);
     }
 
     public function payment(): BelongsTo
